@@ -1,0 +1,3 @@
+<color name="primary">#FF1B4B59</color>
+<color name="secondary">#FF408498</color>
+<color name="tertiary">#FF7BB0C0</color>
