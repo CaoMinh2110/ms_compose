@@ -183,7 +183,7 @@ fun MainNavGraph() {
                                         unselectedTextColor = TextSecondary,
                                         disabledIconColor = Secondary,
                                         disabledTextColor = Secondary,
-                                        indicatorColor = Color.Unspecified
+                                        indicatorColor = Color.Transparent
                                     ),
                                     onClick = {},
                                     icon = {

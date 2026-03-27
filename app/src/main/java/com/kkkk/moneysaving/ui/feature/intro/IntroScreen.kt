@@ -1,6 +1,8 @@
 package com.kkkk.moneysaving.ui.feature.intro
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,10 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -23,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -49,10 +51,10 @@ private fun IntroContent(
 ) {
     val pages = remember {
         listOf(
-            IntroPage(R.string.message_intro_1, R.string.message_intro_1),
-            IntroPage(R.string.message_intro_2, R.string.message_intro_2),
-            IntroPage(R.string.message_intro_3, R.string.message_intro_3),
-            IntroPage(R.string.message_intro_4, R.string.message_intro_4),
+            IntroPage(R.string.message_intro_title_0, R.string.message_intro_description_0),
+            IntroPage(R.string.message_intro_title_1, R.string.message_intro_description_1),
+            IntroPage(R.string.message_intro_title_2, R.string.message_intro_description_2),
+            IntroPage(R.string.message_intro_title_3, R.string.message_intro_description_3),
         )
     }
     val pagerState = rememberPagerState(initialPage = 0) { pages.size }
@@ -176,11 +178,26 @@ private fun PagerIndicators(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         repeat(pageCount) { index ->
-            val color = if (index == currentPage) Color.White else Color(0xFFB9DDE4)
+            val isSelected = index == currentPage
+
+            val width by animateDpAsState(
+                targetValue = if (isSelected) 20.dp else 8.dp,
+                label = "indicator_width"
+            )
+
+            val color by animateColorAsState(
+                targetValue = if (isSelected) Color.White else Color(0xFFB9DDE4),
+                label = "indicator_color"
+            )
+
             Box(
                 modifier = Modifier
-                    .size(8.dp)
-                    .background(color = color, shape = CircleShape),
+                    .height(8.dp)
+                    .width(width)
+                    .background(
+                        color = color,
+                        shape = RoundedCornerShape(50)
+                    )
             )
         }
     }

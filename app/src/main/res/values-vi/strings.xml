@@ -66,10 +66,6 @@
     <!-- MESSAGES / INFO -->
     <string name="message_splash_loading">Đang tải (%1$d%%)...</string>
     <string name="message_splash_ads_note">Hành động này có thể chứa quảng cáo</string>
-    <string name="message_intro_1">Ghi lại chi tiêu cá nhân dễ dàng và quản lý tiền.</string>
-    <string name="message_intro_2">Xem biểu đồ trực quan cho chi tiêu hàng tháng.</string>
-    <string name="message_intro_3">Phân loại thu nhập rõ ràng với thống kê dễ nhìn.</string>
-    <string name="message_intro_4">Lưu khoản tiết kiệm mới; nhận biết nhanh hàng ngày.</string>
     <string name="message_transaction_empty">Không tìm thấy dữ liệu, vui lòng thử lại.</string>
     <string name="message_budget_empty">Thêm chi tiêu đầu tiên để bắt đầu!</string>
     <string name="message_sync_backup_title">Dữ liệu trước chưa được đồng bộ?</string>
@@ -83,6 +79,14 @@
     <string name="message_rate_2">Chúng tôi cũng yêu bạn!</string>
     <string name="message_save_success">Đã lưu vào thư viện</string>
     <string name="message_save_fail">Lưu thất bại!</string>
+    <string name="message_intro_title_0">Quản lý tài chính</string>
+    <string name="message_intro_title_1">Biểu đồ phân tích chi tiêu</string>
+    <string name="message_intro_title_2">Phân loại chi tiêu</string>
+    <string name="message_intro_title_3">Quản lý nợ</string>
+    <string name="message_intro_description_0">Theo dõi chi tiêu thông minh, dễ dàng quản lý\n</string>
+    <string name="message_intro_description_1">Biểu đồ thông minh cho báo cáo quản lý tài chính hàng tháng</string>
+    <string name="message_intro_description_2">Phân loại thu nhập rõ ràng với sáu hũ chi tiêu được đề xuất.</string>
+    <string name="message_intro_description_3">Các khoản vay được phân loại rõ ràng và chặt chẽ.\n</string>
 
     <!-- ERRORS -->
     <string name="error_editor_amount_invalid">Số tiền không hợp lệ</string>

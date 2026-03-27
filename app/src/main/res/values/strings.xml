@@ -66,10 +66,6 @@
     <!-- MESSAGES / INFO -->
     <string name="message_splash_loading">Loading (%1$d%%)...</string>
     <string name="message_splash_ads_note">This action can contain ads</string>
-    <string name="message_intro_1">Record personal spending easily and manage money.</string>
-    <string name="message_intro_2">Get visual chart for monthly financial spending.</string>
-    <string name="message_intro_3">Clear income classification with statistics and easy to view.</string>
-    <string name="message_intro_4">Save new money saving; identify quickly on daily.</string>
     <string name="message_transaction_empty">No data found, please try again.</string>
     <string name="message_budget_empty">Add your first expense to get started!</string>
     <string name="message_sync_backup_title">Previous data hasn\'t been synced?</string>
@@ -83,6 +79,14 @@
     <string name="message_rate_2">We love you too!</string>
     <string name="message_save_success">Saved to gallery</string>
     <string name="message_save_fail">Failed to save!</string>
+    <string name="message_intro_title_0">Financial management</string>
+    <string name="message_intro_title_1">Expense analysis chart</string>
+    <string name="message_intro_title_2">Expense classification</string>
+    <string name="message_intro_title_3">Debt management</string>
+    <string name="message_intro_description_0">Smart expense tracking, easy to manage\n</string>
+    <string name="message_intro_description_1">Smart chart for monthly financial\nmanagement reporting</string>
+    <string name="message_intro_description_2">Clear income classification with six\nrecommended spending jars.</string>
+    <string name="message_intro_description_3">Loans are clearly and tightly categorized.\n</string>
 
     <!-- ERRORS -->
     <string name="error_editor_amount_invalid">Invalid amount</string>
