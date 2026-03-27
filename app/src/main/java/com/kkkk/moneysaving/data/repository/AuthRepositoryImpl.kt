@@ -7,6 +7,7 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.credentials.CredentialManager
@@ -22,6 +23,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import com.google.firebase.Timestamp
+import java.net.HttpURLConnection
+import java.net.URL
 
 private const val TAG = "AuthRepository"
 private const val WEB_CLIENT_ID = "545342756641-n7vle04jb9puipdbrr6ap2l7104d6v3q.apps.googleusercontent.com"
@@ -29,6 +32,7 @@ private const val WEB_CLIENT_ID = "545342756641-n7vle04jb9puipdbrr6ap2l7104d6v3q
 class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
+    private val storage: FirebaseStorage,
 ) : AuthRepository {
 
     override val isLoggedIn: Flow<Boolean> = callbackFlow {
@@ -41,33 +45,48 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override val userProfile: Flow<UserProfile?> = callbackFlow {
-        val listener = FirebaseAuth.AuthStateListener { auth ->
+        var listenerRegistration: com.google.firebase.firestore.ListenerRegistration? = null
+
+        val authListener = FirebaseAuth.AuthStateListener { auth ->
             val user = auth.currentUser
+            listenerRegistration?.remove()
+
             if (user != null) {
-                val profile = UserProfile(
-                    uid = user.uid,
-                    name = user.displayName ?: "",
-                    email = user.email ?: "",
-                    avatar = user.photoUrl?.toString() ?: ""
-                )
-                trySend(profile).isSuccess
+                listenerRegistration = firestore.collection("users").document(user.uid)
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            Log.e(TAG, "Firestore error", error)
+                            return@addSnapshotListener
+                        }
+
+                        val profile = if (snapshot != null && snapshot.exists()) {
+                            UserProfile(
+                                uid = user.uid,
+                                name = snapshot.getString("name") ?: user.displayName.orEmpty(),
+                                email = snapshot.getString("email") ?: user.email.orEmpty(),
+                                avatar = snapshot.getString("avatar") ?: user.photoUrl?.toString().orEmpty()
+                            )
+                        } else {
+                            UserProfile(
+                                uid = user.uid,
+                                name = user.displayName.orEmpty(),
+                                email = user.email.orEmpty(),
+                                avatar = user.photoUrl?.toString().orEmpty()
+                            )
+                        }
+                        trySend(profile)
+                    }
             } else {
-                trySend(null).isSuccess
+                trySend(null)
             }
         }
-        firebaseAuth.addAuthStateListener(listener)
 
-        firebaseAuth.currentUser?.let { user ->
-            val profile = UserProfile(
-                uid = user.uid,
-                name = user.displayName ?: "",
-                email = user.email ?: "",
-                avatar = user.photoUrl?.toString() ?: ""
-            )
-            trySend(profile).isSuccess
+        firebaseAuth.addAuthStateListener(authListener)
+
+        awaitClose {
+            firebaseAuth.removeAuthStateListener(authListener)
+            listenerRegistration?.remove()
         }
-
-        awaitClose { firebaseAuth.removeAuthStateListener(listener) }
     }
 
     override suspend fun signInWithGoogle(
@@ -118,11 +137,15 @@ class AuthRepositoryImpl @Inject constructor(
                 
                 val profile = if (!userDoc.exists()) {
                     Log.d(TAG, "New user detected, creating Firestore document")
+                    
+                    val photoUrl = firebaseUser.photoUrl?.toString()
+                    val storageAvatarUrl = uploadAvatarFromUrl(uid, photoUrl)
+                    
                     val newProfile = UserProfile(
                         uid = uid,
-                        name = firebaseUser.displayName ?: "",
-                        email = firebaseUser.email ?: "",
-                        avatar = firebaseUser.photoUrl?.toString() ?: ""
+                        name = firebaseUser.displayName.orEmpty(),
+                        email = firebaseUser.email.orEmpty(),
+                        avatar = storageAvatarUrl ?: photoUrl.orEmpty()
                     )
                     
                     val userData = hashMapOf(
@@ -138,9 +161,9 @@ class AuthRepositoryImpl @Inject constructor(
                     Log.d(TAG, "Existing user logged in, retrieving data from Firestore")
                     UserProfile(
                         uid = uid,
-                        name = userDoc.getString("name") ?: firebaseUser.displayName ?: "",
-                        email = userDoc.getString("email") ?: firebaseUser.email ?: "",
-                        avatar = userDoc.getString("avatar") ?: firebaseUser.photoUrl?.toString() ?: ""
+                        name = userDoc.getString("name") ?: firebaseUser.displayName.orEmpty(),
+                        email = userDoc.getString("email") ?: firebaseUser.email.orEmpty(),
+                        avatar = userDoc.getString("avatar") ?: firebaseUser.photoUrl?.toString().orEmpty()
                     )
                 }
 
@@ -156,8 +179,56 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    private suspend fun uploadAvatarFromUrl(uid: String, photoUrl: String?): String? {
+        if (photoUrl.isNullOrEmpty()) return null
+        if (photoUrl.contains("firebasestorage.googleapis.com")) return photoUrl
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val storageRef = storage.reference.child("avatars/$uid.jpg")
+                val url = URL(photoUrl)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.doInput = true
+                connection.connect()
+                val input = connection.inputStream
+                val bytes = input.readBytes()
+                storageRef.putBytes(bytes).await()
+                storageRef.downloadUrl.await().toString()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to upload avatar to storage", e)
+                null
+            }
+        }
+    }
+
     override suspend fun signOut() {
         firebaseAuth.signOut()
+    }
+
+    override suspend fun updateUserProfile(
+        name: String,
+        avatar: String?
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val currentUser = firebaseAuth.currentUser ?: return@withContext Result.failure(
+                Exception("User not authenticated")
+            )
+
+            val uid = currentUser.uid
+            val userDocRef = firestore.collection("users").document(uid)
+
+            val updateData = hashMapOf<String, Any>("name" to name)
+            if (avatar != null) {
+                updateData["avatar"] = avatar
+            }
+
+            userDocRef.update(updateData).await()
+            Log.d(TAG, "User profile updated successfully")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to update user profile", e)
+            Result.failure(e)
+        }
     }
 
     private fun Context.findActivity(): Activity? {

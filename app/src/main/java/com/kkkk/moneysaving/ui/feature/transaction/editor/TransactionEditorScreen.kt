@@ -1,6 +1,5 @@
 package com.kkkk.moneysaving.ui.feature.transaction.editor
 
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
@@ -13,14 +12,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,6 +30,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -47,6 +49,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,10 +60,11 @@ import com.kkkk.moneysaving.R
 import com.kkkk.moneysaving.domain.model.Category
 import com.kkkk.moneysaving.domain.model.CategoryType
 import com.kkkk.moneysaving.ui.LocalCurrencySymbol
-import com.kkkk.moneysaving.ui.LocalScreenPadding
 import com.kkkk.moneysaving.ui.components.SegmentedTab
 import com.kkkk.moneysaving.ui.theme.AppColor
+import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.TextBudgetDark
+import com.kkkk.moneysaving.ui.theme.TextError
 import com.kkkk.moneysaving.ui.theme.TextPrimary
 import com.kkkk.moneysaving.ui.theme.TextSecondary
 import java.time.LocalDate
@@ -68,7 +72,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-private const val TAG = "TransactionEditorScreen"
 private val Radius = RoundedCornerShape(12.dp)
 
 @Composable
@@ -120,7 +123,8 @@ private fun TransactionEditorContent(
         modifier = Modifier
             .fillMaxSize()
             .background(AppColor)
-            .padding(horizontal = 18.dp)
+            .padding(horizontal = 16.dp)
+            .navigationBarsPadding()
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
@@ -145,14 +149,15 @@ private fun TransactionEditorContent(
             item(span = { GridItemSpan(column) }) {
                 EditorAmountSection(
                     value = uiState.amount,
+                    error = uiState.amountError,
                     onValueChange = onAmountChanged,
                 )
             }
 
             item(span = { GridItemSpan(column) }) {
                 Text(
-                    text = stringResource(R.string.editor_category),
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = stringResource(R.string.title_editor_category),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = TextSecondary,
                 )
             }
@@ -207,10 +212,10 @@ private fun TransactionEditorContent(
 
         if (showBudget) {
             BudgetDialog(
+                initializeId = uiState.selectedBudgetId,
                 options = uiState.allBudget,
                 onDismiss = { showBudget = false },
                 onSave = { budget ->
-                    Log.d(TAG, "Selected budget: $budget")
                     onSave(budget)
                     showBudget = false
                 },
@@ -221,7 +226,6 @@ private fun TransactionEditorContent(
             SetTimeDialog(
                 onDismiss = { showTime = false },
                 onSave = { h, m ->
-                    Log.d(TAG, "Selected time: %02d:%02d".format(h, m))
                     onTimeChanged(LocalTime.of(h, m))
                     showTime = false
                 },
@@ -231,8 +235,7 @@ private fun TransactionEditorContent(
         if (showDate) {
             SetDateDialog(
                 onDismiss = { showDate = false },
-                onSave = { month, day, year ->
-                    Log.d(TAG, "Selected date: %02d-%02d-%d".format(month, day, year))
+                onSave = { day, month, year ->
                     onDateChanged(LocalDate.of(year, month, day))
                     showDate = false
                 },
@@ -249,38 +252,38 @@ private fun EditorTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                top = LocalScreenPadding.current.calculateTopPadding(),
-                bottom = 20.dp
-            ),
+            .padding(bottom = 20.dp, top = 40.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
-            text = stringResource(R.string.editor_cancel),
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextPrimary,
-            modifier = Modifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onCancel
-                )
-                .padding(6.dp),
-        )
+        Button(
+            onClick = onCancel,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AppColor,
+                contentColor = TextPrimary,
+            ),
+            contentPadding = PaddingValues(horizontal = 0.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.title_cancel),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
 
-        Text(
-            text = stringResource(R.string.editor_next),
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextBudgetDark,
-            modifier = Modifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onNext
-                )
-                .padding(6.dp),
-        )
+        Button(
+            onClick = onNext,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AppColor,
+                contentColor = TextPrimary,
+            ),
+            contentPadding = PaddingValues(horizontal = 0.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.title_next),
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextBudgetDark,
+            )
+        }
     }
 }
 
@@ -288,20 +291,48 @@ private fun EditorTopBar(
 @Composable
 private fun EditorAmountSection(
     value: String,
+    error: String?,
     onValueChange: (String) -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = stringResource(R.string.editor_amount),
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                text = stringResource(R.string.title_editor_amount),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = if (error != null) TextError else TextSecondary,
+            )
+            if (error != null) {
+                Text(
+                    text = stringResource(R.string.error_editor_amount_invalid),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextError,
+                )
+            }
+        }
         OutlinedTextField(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             value = value,
-            onValueChange = { v -> onValueChange(v.filter { it.isDigit() }) },
+            isError = error != null,
+            onValueChange = { input ->
+                val digitsOnly = input.filter { it.isDigit() }
+
+                val processedValue = when {
+                    digitsOnly.isEmpty() -> ""
+                    digitsOnly.startsWith("0") && digitsOnly.length > 1 -> {
+                        digitsOnly.dropWhile { it == '0' }.ifEmpty { "0" }
+                    }
+
+                    else -> digitsOnly
+                }
+
+                onValueChange(processedValue)
+            },
             modifier = Modifier.fillMaxWidth(),
             textStyle = MaterialTheme.typography.titleLarge,
             shape = Radius,
@@ -336,7 +367,7 @@ private fun EditorCategoryItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val borderColor = if (selected) Color(0xFF104B59) else Color.Transparent
+    val borderColor = if (selected) Primary else Color.Transparent
 
     Column(
         modifier = Modifier
@@ -371,8 +402,8 @@ private fun EditorBorrowerSection(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            text = stringResource(R.string.editor_borrower),
-            style = MaterialTheme.typography.bodyMedium,
+            text = stringResource(R.string.title_editor_borrower),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
             color = TextSecondary,
         )
         OutlinedTextField(
@@ -381,7 +412,7 @@ private fun EditorBorrowerSection(
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text(
-                    text = stringResource(R.string.editor_borrower_hint),
+                    text = stringResource(R.string.hint_transaction_name),
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary,
                 )
@@ -401,8 +432,8 @@ private fun EditorNoteSection(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            text = stringResource(R.string.editor_note),
-            style = MaterialTheme.typography.bodyMedium,
+            text = stringResource(R.string.title_editor_note),
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
             color = TextSecondary,
         )
         OutlinedTextField(
@@ -411,7 +442,7 @@ private fun EditorNoteSection(
             modifier = Modifier.fillMaxWidth(),
             placeholder = {
                 Text(
-                    text = stringResource(R.string.editor_note_hint),
+                    text = stringResource(R.string.hint_note),
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary,
                 )
@@ -432,7 +463,7 @@ private fun EditorDateTimeSection(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            text = stringResource(R.string.editor_date),
+            text = stringResource(R.string.title_editor_date),
             style = MaterialTheme.typography.bodyMedium,
             color = TextSecondary,
         )

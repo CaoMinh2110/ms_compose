@@ -21,7 +21,7 @@ fun RootNavGraph(
         navController = navController,
         startDestination = RootRoute.Splash,
     ) {
-        composable(RootRoute.Splash) {
+        composable<RootRoute.Splash> {
             SplashScreen(
                 onFinished = { start ->
                     navController.navigate(start) {
@@ -31,7 +31,7 @@ fun RootNavGraph(
                 viewModel = viewModel,
             )
         }
-        composable(RootRoute.Intro) {
+        composable<RootRoute.Intro> {
             IntroScreen(
                 onFinished = {
                     navController.navigate(RootRoute.Language) {
@@ -40,7 +40,7 @@ fun RootNavGraph(
                 },
             )
         }
-        composable(RootRoute.Language) {
+        composable<RootRoute.Language> {
             LanguageScreen(
                 onContinue = {
                     navController.navigate(RootRoute.Currency) {
@@ -49,7 +49,7 @@ fun RootNavGraph(
                 },
             )
         }
-        composable(RootRoute.Currency) {
+        composable<RootRoute.Currency> {
             CurrencyScreen(
                 onContinue = {
                     navController.navigate(RootRoute.Auth) {
@@ -58,7 +58,7 @@ fun RootNavGraph(
                 },
             )
         }
-        composable(RootRoute.Auth) {
+        composable<RootRoute.Auth> {
             AuthScreen(
                 onFinished = { isLoggedIn ->
                     val next = if (isLoggedIn) RootRoute.Main else RootRoute.OnboardingBudget
@@ -68,7 +68,7 @@ fun RootNavGraph(
                 },
             )
         }
-        composable(RootRoute.OnboardingBudget) {
+        composable<RootRoute.OnboardingBudget> {
             OnboardingBudgetScreen(
                 onFinished = {
                     navController.navigate(RootRoute.Main) {
@@ -77,7 +77,7 @@ fun RootNavGraph(
                 },
             )
         }
-        composable(RootRoute.Main) {
+        composable<RootRoute.Main> {
             MainNavGraph()
         }
     }

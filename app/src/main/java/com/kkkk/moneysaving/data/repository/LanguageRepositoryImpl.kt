@@ -9,7 +9,7 @@ class LanguageRepositoryImpl @Inject constructor() : LanguageRepository {
     override fun getSupportedLanguages(): List<Language> {
         return listOf(
             Language(code = "en", displayName = "English", R.drawable.ic_flag_gb),
-            Language(code = "vn", displayName = "Tiếng Việt", R.drawable.ic_flag_vn),
+            Language(code = "vi", displayName = "Tiếng Việt", R.drawable.ic_flag_vn),
         )
     }
 }

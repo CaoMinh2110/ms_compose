@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kkkk.moneysaving.R
+import com.kkkk.moneysaving.ui.theme.Secondary
 import kotlinx.coroutines.launch
 
 @Composable
@@ -47,10 +49,10 @@ private fun IntroContent(
 ) {
     val pages = remember {
         listOf(
-            IntroPage(R.string.intro_title_1, R.string.intro_desc_1),
-            IntroPage(R.string.intro_title_2, R.string.intro_desc_2),
-            IntroPage(R.string.intro_title_3, R.string.intro_desc_3),
-            IntroPage(R.string.intro_title_4, R.string.intro_desc_4),
+            IntroPage(R.string.message_intro_1, R.string.message_intro_1),
+            IntroPage(R.string.message_intro_2, R.string.message_intro_2),
+            IntroPage(R.string.message_intro_3, R.string.message_intro_3),
+            IntroPage(R.string.message_intro_4, R.string.message_intro_4),
         )
     }
     val pagerState = rememberPagerState(initialPage = 0) { pages.size }
@@ -58,12 +60,13 @@ private fun IntroContent(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF0E6B7C),
+        color = Secondary,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 34.dp, bottom = 24.dp),
+                .padding(top = 34.dp, bottom = 24.dp)
+                .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             HorizontalPager(
@@ -96,11 +99,14 @@ private fun IntroContent(
                 Button(
                     onClick = onFinished,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF0E6B7C),
+                        containerColor = Secondary,
                         contentColor = Color.White,
                     ),
                 ) {
-                    Text(text = stringResource(R.string.intro_skip))
+                    Text(
+                        text = stringResource(R.string.title_skip),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
                 }
 
                 val isLast = pagerState.currentPage == pages.lastIndex
@@ -113,12 +119,13 @@ private fun IntroContent(
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
-                        contentColor = Color(0xFF0E6B7C),
+                        contentColor = Secondary,
                     ),
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     Text(
-                        text = stringResource(if (isLast) R.string.intro_start else R.string.intro_next),
+                        text = stringResource(if (isLast) R.string.title_start else R.string.title_next),
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
             }
@@ -136,7 +143,6 @@ private fun IntroPageContent(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth()

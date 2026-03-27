@@ -2,7 +2,6 @@ package com.kkkk.moneysaving.ui.components
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -21,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kkkk.moneysaving.R
 import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.Secondary
 import com.kkkk.moneysaving.ui.theme.TextPrimary
@@ -49,12 +50,15 @@ val SelectedBg = Color(0xFFF0FAF9)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DialogBody(
-    @StringRes title:  Int,
+    @StringRes title: Int?,
     trailing: @Composable (Modifier) -> Unit,
+    showButton: Boolean = true,
     onDismiss: () -> Unit = {},
     onSave: () -> Unit = {},
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
     val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
@@ -72,34 +76,38 @@ fun DialogBody(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(bottom = 16.dp),
         ) {
-            Text(
-                text = stringResource(title),
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp,
-                color = TextPrimary,
-                modifier = Modifier.padding(top = 20.dp, bottom = 12.dp),
-            )
+            if(title != null) {
+                Text(
+                    text = stringResource(title),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp,
+                    color = TextPrimary,
+                    modifier = Modifier.padding(top = 20.dp, bottom = 12.dp),
+                )
 
-            HorizontalDivider(color = TextSecondary)
+                HorizontalDivider(color = TextSecondary)
+            }
 
             trailing(Modifier.weight(1f))
 
-            HorizontalDivider(color = TextSecondary)
+            if(showButton) {
+                HorizontalDivider(color = TextSecondary)
 
-            DialogButtons(
-                onCancel = {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
+                DialogButtons(
+                    onCancel = {
+                        scope.launch {
+                            sheetState.hide()
+                            onDismiss()
+                        }
+                    },
+                    onSave = {
+                        scope.launch {
+                            sheetState.hide()
+                            onSave()
+                        }
                     }
-                },
-                onSave = {
-                    scope.launch {
-                        sheetState.hide()
-                        onSave()
-                    }
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -125,7 +133,10 @@ fun DialogButtons(
                 .weight(1f)
                 .height(46.dp),
         ) {
-            Text("Cancel", fontSize = 15.sp)
+            Text(
+                text = stringResource(R.string.title_cancel),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
 
         // Save
@@ -137,7 +148,11 @@ fun DialogButtons(
                 .weight(1f)
                 .height(46.dp),
         ) {
-            Text("Save", fontSize = 15.sp, color = Color.White)
+            Text(
+                text = stringResource(R.string.title_save),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White
+            )
         }
     }
 }

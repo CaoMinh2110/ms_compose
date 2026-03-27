@@ -9,5 +9,5 @@ interface BudgetRepository {
     suspend fun upsert(budget: Budget)
     suspend fun upsertAll(budgets: List<Budget>)
     suspend fun softDelete(id: String, updatedAt: Long)
+    suspend fun hardDelete(id: String)
 }
-

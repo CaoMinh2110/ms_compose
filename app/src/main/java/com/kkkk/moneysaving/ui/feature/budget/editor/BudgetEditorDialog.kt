@@ -17,6 +17,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,15 +30,21 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kkkk.moneysaving.R
 import com.kkkk.moneysaving.ui.LocalCurrencySymbol
+import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.TextPrimary
 import com.kkkk.moneysaving.ui.theme.TextSecondary
 
 @Composable
 fun BudgetEditorDialog(
+    budgetId: String? = null,
     viewModel: BudgetEditorViewModel = hiltViewModel(),
     onDismiss: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(budgetId) {
+        viewModel.loadBudget(budgetId)
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -51,7 +58,9 @@ fun BudgetEditorDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.budget_add),
+                    text = if (budgetId == null) stringResource(R.string.title_budget_add) else stringResource(
+                        R.string.title_budget_edit
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                 )
@@ -59,16 +68,29 @@ fun BudgetEditorDialog(
                     value = uiState.name,
                     onValueChange = viewModel::updateName,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(text = stringResource(R.string.onboarding_budget_hint_name)) },
+                    placeholder = { Text(text = stringResource(R.string.hint_budget_name)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                 )
                 OutlinedTextField(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     value = uiState.amount,
-                    onValueChange = viewModel::updateAmount,
+                    onValueChange = { input ->
+                        val digitsOnly = input.filter { it.isDigit() }
+
+                        val processedValue = when {
+                            digitsOnly.isEmpty() -> ""
+                            digitsOnly.startsWith("0") && digitsOnly.length > 1 -> {
+                                digitsOnly.dropWhile { it == '0' }.ifEmpty { "0" }
+                            }
+
+                            else -> digitsOnly
+                        }
+
+                        viewModel.updateAmount(processedValue)
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(text = stringResource(R.string.onboarding_budget_hint_amount)) },
+                    placeholder = { Text(text = stringResource(R.string.hint_budget_amount)) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     trailingIcon = {
@@ -106,11 +128,14 @@ fun BudgetEditorDialog(
                             .height(44.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFEAF4F7),
-                            contentColor = Color(0xFF1B4B59),
+                            contentColor = Primary,
                         ),
                         shape = RoundedCornerShape(14.dp),
                     ) {
-                        Text(text = stringResource(R.string.editor_cancel))
+                        Text(
+                            text = stringResource(R.string.title_cancel),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                     Button(
                         onClick = { viewModel.save(onSaved = onDismiss) },
@@ -118,16 +143,18 @@ fun BudgetEditorDialog(
                             .weight(1f)
                             .height(44.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1B4B59),
+                            containerColor = Primary,
                             contentColor = Color.White,
                         ),
                         shape = RoundedCornerShape(14.dp),
                     ) {
-                        Text(text = stringResource(R.string.editor_next))
+                        Text(
+                            text = stringResource(R.string.title_save),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }
         }
     }
 }
-

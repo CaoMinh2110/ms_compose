@@ -41,9 +41,9 @@ fun SegmentedTab(
     val selectedIndex = selected.ordinal
 
     val tabs = listOf(
-        stringResource(id = R.string.home_tab_expense),
-        stringResource(id = R.string.home_tab_income),
-        stringResource(id = R.string.home_tab_loan)
+        stringResource(id = R.string.title_expense),
+        stringResource(id = R.string.title_income),
+        stringResource(id = R.string.title_loan)
     )
 
     val tabIcon = listOf(

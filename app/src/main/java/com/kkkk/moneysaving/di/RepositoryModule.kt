@@ -5,6 +5,7 @@ import com.kkkk.moneysaving.data.repository.AuthRepositoryImpl
 import com.kkkk.moneysaving.data.repository.BudgetRepositoryImpl
 import com.kkkk.moneysaving.data.repository.CategoryRepositoryImpl
 import com.kkkk.moneysaving.data.repository.CurrencyRepositoryImpl
+import com.kkkk.moneysaving.data.repository.ImageRepositoryImpl
 import com.kkkk.moneysaving.data.repository.LanguageRepositoryImpl
 import com.kkkk.moneysaving.data.repository.SettingsRepositoryImpl
 import com.kkkk.moneysaving.data.repository.TransactionRepositoryImpl
@@ -13,6 +14,7 @@ import com.kkkk.moneysaving.domain.repository.AuthRepository
 import com.kkkk.moneysaving.domain.repository.BudgetRepository
 import com.kkkk.moneysaving.domain.repository.CategoryRepository
 import com.kkkk.moneysaving.domain.repository.CurrencyRepository
+import com.kkkk.moneysaving.domain.repository.ImageRepository
 import com.kkkk.moneysaving.domain.repository.LanguageRepository
 import com.kkkk.moneysaving.domain.repository.SettingsRepository
 import com.kkkk.moneysaving.domain.repository.TransactionRepository
@@ -44,6 +46,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindImageRepository(impl: ImageRepositoryImpl): ImageRepository
 
     @Binds
     @Singleton

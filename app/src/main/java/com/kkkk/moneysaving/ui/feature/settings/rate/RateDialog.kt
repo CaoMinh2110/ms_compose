@@ -25,9 +25,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,12 +57,12 @@ fun RateDialog(
 ) {
     var rating by remember { mutableIntStateOf(0) }
     val contents = listOf(
-        Content("😊",R.string.rate_title_0),
-        Content("😭",R.string.rate_title_1),
-        Content("😢",R.string.rate_title_1),
-        Content("😟",R.string.rate_title_1),
-        Content("\uD83D\uDE01",R.string.rate_title_2),
-        Content("😍",R.string.rate_title_2),
+        Content("😊", R.string.message_rate_0),
+        Content("😭", R.string.message_rate_1),
+        Content("😢", R.string.message_rate_1),
+        Content("😟", R.string.message_rate_1),
+        Content("\uD83D\uDE01", R.string.message_rate_2),
+        Content("😁", R.string.message_rate_2),
     )
     val interactionSource = remember { MutableInteractionSource() }
     var pressedIndex by remember { mutableIntStateOf(-1) }
@@ -163,7 +163,10 @@ fun RateDialog(
                         ),
                         shape = RoundedCornerShape(14.dp),
                     ) {
-                        Text(text = stringResource(R.string.rate_not_now))
+                        Text(
+                            text = stringResource(R.string.title_rate_not_now),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                     Button(
                         onClick = { onRate(rating) },
@@ -177,7 +180,10 @@ fun RateDialog(
                         shape = RoundedCornerShape(14.dp),
                         enabled = rating > 0,
                     ) {
-                        Text(text = stringResource(R.string.rate_rate))
+                        Text(
+                            text = stringResource(R.string.title_rate),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }

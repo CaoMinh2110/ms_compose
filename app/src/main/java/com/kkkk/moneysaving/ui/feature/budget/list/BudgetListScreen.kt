@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,11 +34,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,11 +69,13 @@ import com.kkkk.moneysaving.domain.model.Budget
 import com.kkkk.moneysaving.ui.LocalScreenPadding
 import com.kkkk.moneysaving.ui.components.BudgetIcon
 import com.kkkk.moneysaving.ui.feature.budget.editor.BudgetEditorDialog
-import com.kkkk.moneysaving.ui.feature.transaction.detail.toAmountString
 import com.kkkk.moneysaving.ui.theme.AppColor
+import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.Secondary
 import com.kkkk.moneysaving.ui.theme.Tertiary
 import com.kkkk.moneysaving.ui.theme.TextPrimary
+import com.kkkk.moneysaving.ui.theme.TextSecondary
+import com.kkkk.moneysaving.util.formatCurrencyAmount
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -83,11 +87,14 @@ fun BudgetListScreen(
     viewModel: BudgetListViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentBudgetId by viewModel.currentBudgetId.collectAsStateWithLifecycle()
 
     BudgetListContent(
         contentPadding = LocalScreenPadding.current,
         uiState = uiState,
+        currentBudgetId = currentBudgetId,
         onOpenDetail = onOpenDetail,
+        onUpdateBudgetId = viewModel::updateBudgetId,
         sharedTransitionScope = sharedTransitionScope,
         animatedVisibilityScope = animatedVisibilityScope
     )
@@ -98,7 +105,9 @@ fun BudgetListScreen(
 private fun BudgetListContent(
     contentPadding: PaddingValues,
     uiState: BudgetListUiState,
+    currentBudgetId: String?,
     onOpenDetail: (String) -> Unit = {},
+    onUpdateBudgetId: (String?) -> Unit = {},
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {
@@ -142,32 +151,21 @@ private fun BudgetListContent(
                 start = 18.dp,
                 end = 18.dp,
                 top = contentPadding.calculateTopPadding() + 14.dp,
-                bottom = contentPadding.calculateBottomPadding() + 80.dp // Extra padding for button
+                bottom = contentPadding.calculateBottomPadding() + 80.dp
             ),
             verticalArrangement = Arrangement.spacedBy(18.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = stringResource(R.string.budget_detail_title),
+                        text = stringResource(R.string.title_budget_detail),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp
                         ),
                         color = TextPrimary,
                         modifier = Modifier.align(Alignment.Center)
-                    )
-
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        tint = Color(0xFF1B4B59),
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .size(24.dp)
                     )
                 }
             }
@@ -191,7 +189,11 @@ private fun BudgetListContent(
                 BudgetGridItem(
                     index = index,
                     itemState = item,
-                    onClick = { onOpenDetail(item.budget.id) },
+                    onOpenDetailClick = { onOpenDetail(item.budget.id) },
+                    onEditClick = {
+                        onUpdateBudgetId(item.budget.id)
+                        showDialog = true
+                    },
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope
                 )
@@ -216,31 +218,55 @@ private fun BudgetListContent(
                 )
             ) {
                 Button(
-                    onClick = { showDialog = true },
+                    onClick = {
+                        onUpdateBudgetId(null)
+                        showDialog = true
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF104B59),
+                        containerColor = Primary,
                         contentColor = Color.White,
                     ),
                     shape = RoundedCornerShape(28.dp),
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text(text = stringResource(R.string.budget_add))
+                    Text(
+                        text = stringResource(R.string.title_budget_add),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
         }
 
         if (showDialog) {
-            BudgetEditorDialog { showDialog = false }
+            BudgetEditorDialog(
+                budgetId = currentBudgetId,
+                onDismiss = {
+                    showDialog = false
+                    onUpdateBudgetId(null)
+                }
+            )
         }
     }
 }
 
 @Composable
 private fun BudgetRingCard(remainingPercent: Int) {
+    val animatedPercent by animateIntAsState(
+        targetValue = remainingPercent,
+        animationSpec = tween(durationMillis = 300),
+        label = "remaining_percent_animation"
+    )
+
+    val animatedSweepAngle by animateFloatAsState(
+        targetValue = (remainingPercent.toFloat() / 100f) * 360f,
+        animationSpec = tween(durationMillis = 300),
+        label = "sweep_angle_animation"
+    )
+
     Box(
         modifier = Modifier.height(140.dp),
         contentAlignment = Alignment.Center,
@@ -249,7 +275,6 @@ private fun BudgetRingCard(remainingPercent: Int) {
             modifier = Modifier.size(110.dp),
             contentAlignment = Alignment.Center
         ) {
-            val sweepAngle = (remainingPercent.toFloat() / 100f) * 360f
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawArc(
                     color = Color(0xFFE7F0F3),
@@ -261,19 +286,19 @@ private fun BudgetRingCard(remainingPercent: Int) {
                 drawArc(
                     color = Secondary,
                     startAngle = -90f,
-                    sweepAngle = sweepAngle,
+                    sweepAngle = animatedSweepAngle,
                     useCenter = false,
                     style = Stroke(width = 16.dp.toPx(), cap = StrokeCap.Round)
                 )
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = stringResource(R.string.budget_remaining),
+                    text = stringResource(R.string.title_remaining),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF939393),
+                    color = TextSecondary,
                 )
                 Text(
-                    text = "$remainingPercent%",
+                    text = "$animatedPercent%",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = TextPrimary,
                 )
@@ -301,12 +326,12 @@ private fun BudgetSummaryCard(totalBudget: Long, totalSpent: Long) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.budget_budget) + ":",
+                    text = stringResource(R.string.title_budget) + ": ",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF939393)
+                    color = TextSecondary
                 )
                 Text(
-                    text = totalBudget.toAmountString(),
+                    text = totalBudget.formatCurrencyAmount(),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = TextPrimary
                 )
@@ -317,12 +342,12 @@ private fun BudgetSummaryCard(totalBudget: Long, totalSpent: Long) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.budget_expenses) + ":",
+                    text = stringResource(R.string.title_expense) + ": ",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF939393)
+                    color = TextSecondary
                 )
                 Text(
-                    text = totalSpent.toAmountString(),
+                    text = totalSpent.formatCurrencyAmount(),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = TextPrimary
                 )
@@ -340,12 +365,12 @@ private fun BudgetSummaryCard(totalBudget: Long, totalSpent: Long) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.budget_remain) + ": ",
+                    text = stringResource(R.string.title_remaining) + ": " ,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White
                 )
                 Text(
-                    text = (totalBudget - totalSpent).coerceAtLeast(0).toAmountString(),
+                    text = (totalBudget - totalSpent).coerceAtLeast(0).formatCurrencyAmount(),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = Color.White
                 )
@@ -359,10 +384,10 @@ private fun BudgetSummaryCard(totalBudget: Long, totalSpent: Long) {
 private fun BudgetGridItem(
     index: Int,
     itemState: BudgetItemUiState,
-    modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
-    onClick: () -> Unit,
+    onOpenDetailClick: () -> Unit,
+    onEditClick: () -> Unit,
 ) {
     var play by remember(itemState.budget.id) { mutableStateOf(itemState.hasAnimated) }
 
@@ -380,36 +405,56 @@ private fun BudgetGridItem(
         label = "budget_percent"
     )
 
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(24.dp))
-            .shadow(4.dp, RoundedCornerShape(24.dp))
-            .clickable(onClick = onClick)
-            .background(color = Color(0xFFEAF4F7), shape = RoundedCornerShape(24.dp))
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        
-        BudgetIcon(
-            82f, 
-            itemState.budget, 
-            remainingPercent = animatedPercent,
-            sharedTransitionScope = sharedTransitionScope,
-            animatedVisibilityScope = animatedVisibilityScope
-        )
-        Text(
-            text = itemState.budget.name,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-            color = TextPrimary,
-        )
-        Text(
-            text = itemState.budget.amount.toAmountString(),
-            style = MaterialTheme.typography.titleMedium.copy(
-                color = Color(0xFF4F80FC),
-                fontSize = 14.sp
-            ),
-        )
+    Box {
+        Column(
+            modifier = Modifier
+                .shadow(4.dp, RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(24.dp))
+                .clickable(onClick = onOpenDetailClick)
+                .background(color = Color(0xFFEAF4F7), shape = RoundedCornerShape(24.dp))
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            BudgetIcon(
+                82f,
+                itemState.budget,
+                remainingPercent = animatedPercent,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope
+            )
+            Text(
+                text = itemState.budget.name,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = TextPrimary,
+            )
+            Text(
+                text = itemState.budget.amount.formatCurrencyAmount(),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = Color(0xFF4F80FC),
+                    fontSize = 14.sp
+                ),
+            )
+        }
+
+        IconButton(
+            onClick = onEditClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+                .shadow(2.dp, CircleShape)
+                .size(28.dp)
+                .background(Color.White, CircleShape)
+                .padding(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit",
+                tint = TextPrimary,
+                modifier = Modifier.size(14.dp)
+            )
+        }
     }
 }
 
@@ -435,6 +480,7 @@ private fun BudgetListPreview() {
                 totalSpent = 800000,
                 totalRemainingPercent = 80
             ),
+            currentBudgetId = null,
             contentPadding = PaddingValues(0.dp)
         )
     }

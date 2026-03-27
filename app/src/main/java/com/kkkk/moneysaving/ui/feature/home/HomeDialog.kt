@@ -25,23 +25,29 @@ import com.kkkk.moneysaving.ui.components.ITEM_HEIGHT
 import com.kkkk.moneysaving.ui.components.ScrollPicker
 import com.kkkk.moneysaving.ui.components.SelectedBg
 import com.kkkk.moneysaving.ui.theme.Primary
+import java.time.Year
+import java.time.YearMonth
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 fun SetMonthDialog(
-    initialMonth: Int = 5,
-    initialYear: Int = 2025,
+    initialMonth: Int = YearMonth.now().monthValue,
+    initialYear: Int = Year.now().value,
     onDismiss: () -> Unit = {},
     onSave: (month: Int, year: Int) -> Unit = { _, _ -> },
 ) {
-    val months = (1..12).map { it.toString().padStart(2, '0') }
-    val years = (2020..2035).map { it.toString() }
+    val months = remember { (1..12).map { it.toString().padStart(2, '0') } }
+    val currentYear = remember { Year.now().value }
+    val years = remember(currentYear) { (currentYear - 20..currentYear).map { it.toString() } }
 
-    var selectedMonth by remember { mutableIntStateOf(initialMonth - 1) }
-    var selectedYear by remember { mutableIntStateOf(initialYear - 2020) }
+    var selectedMonth by remember { mutableIntStateOf((initialMonth - 1).coerceIn(0, 11)) }
+    var selectedYear by remember {
+        val index = years.indexOf(initialYear.toString())
+        mutableIntStateOf(if (index != -1) index else years.size - 1)
+    }
 
     DialogBody(
-        title = R.string.home_set_time,
+        title = R.string.title_editor_time,
         trailing = { modifier ->
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -88,10 +94,8 @@ fun SetMonthDialog(
         },
         onDismiss = onDismiss,
         onSave = {
-            onSave(
-                selectedMonth + 1,
-                selectedYear + 2020,
-            )
+            onSave(months[selectedMonth].toInt(), years[selectedYear].toInt())
+            onDismiss()
         }
     )
 }

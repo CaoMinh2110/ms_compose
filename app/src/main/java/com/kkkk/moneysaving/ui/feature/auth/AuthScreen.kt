@@ -25,11 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kkkk.moneysaving.R
 import com.kkkk.moneysaving.ui.components.LoadingOverlay
+import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.TextError
 
 @Composable
@@ -66,9 +66,9 @@ private fun AuthContent(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = stringResource(R.string.auth_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color(0xFF1B4B59),
+                    text = stringResource(R.string.title_account),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Primary,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
@@ -76,7 +76,7 @@ private fun AuthContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = stringResource(R.string.auth_google),
+                    text = stringResource(R.string. title_auth_google),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -91,15 +91,14 @@ private fun AuthContent(
                         .height(56.dp),
                     enabled = !uiState.isLoading,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1B4B59),
+                        containerColor = Primary,
                         contentColor = Color.White,
                     ),
                     shape = RoundedCornerShape(16.dp),
                 ) {
                     Text(
-                        text = stringResource(R.string.auth_google),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        text = stringResource(R.string.title_auth_google),
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
 
@@ -113,14 +112,13 @@ private fun AuthContent(
                     enabled = !uiState.isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFEAF4F7),
-                        contentColor = Color(0xFF1B4B59),
+                        contentColor = Primary,
                     ),
                     shape = RoundedCornerShape(16.dp),
                 ) {
                     Text(
-                        text = stringResource(R.string.auth_skip),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
+                        text = stringResource(R.string.title_skip),
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
 

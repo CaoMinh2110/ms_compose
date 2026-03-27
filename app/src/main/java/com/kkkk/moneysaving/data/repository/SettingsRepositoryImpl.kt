@@ -1,5 +1,7 @@
 package com.kkkk.moneysaving.data.repository
 
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -28,6 +30,9 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.edit { prefs ->
             prefs[PreferenceKeys.LanguageCode] = code
         }
+
+        val appLocales = LocaleListCompat.forLanguageTags(code)
+        AppCompatDelegate.setApplicationLocales(appLocales)
     }
 
     override suspend fun setCurrencyCode(code: String) {

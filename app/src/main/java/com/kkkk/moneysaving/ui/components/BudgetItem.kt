@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
 import com.kkkk.moneysaving.domain.model.Budget
 import com.kkkk.moneysaving.ui.theme.AppColor
@@ -80,7 +79,10 @@ fun BudgetIcon(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .shadow((if (showShadow) capGap else 0f).dp, RoundedCornerShape(bottleRadius.dp))
+                            .shadow(
+                                (if (showShadow) capGap * scale else 0f).dp,
+                                RoundedCornerShape(bottleRadius.dp)
+                            )
                             .border(border.dp, AppColor, RoundedCornerShape(bottleRadius.dp))
                             .clip(RoundedCornerShape(bottleRadius.dp))
                             .background(Color(0xFFE7E7E7), RoundedCornerShape(bottleRadius.dp))
@@ -103,14 +105,16 @@ fun BudgetIcon(
                         )
 
                         if (showRemaining) {
-                            val lineHeight = 18f
                             Text(
                                 text = "${(remainingPercent * 100).toInt()} %",
-                                modifier = Modifier.align(Alignment.Center),
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .graphicsLayer {
+                                        scaleX = 1f / scale
+                                        scaleY = 1f / scale
+                                    },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = getContrastTextColor(Color(budget.color)),
-                                fontSize = lineHeight.coerceAtLeast(11f).sp,
-                                lineHeight = lineHeight.coerceAtLeast(11f).sp
                             )
                         }
                     }
@@ -119,7 +123,10 @@ fun BudgetIcon(
                 Box {
                     Box(
                         modifier = Modifier
-                            .shadow((if (showShadow) capGap - border else 0f).dp, CircleShape)
+                            .shadow(
+                                (if (showShadow) (capGap - border) * scale else 0f).dp,
+                                CircleShape
+                            )
                             .width(capWidth.dp)
                             .height(border.dp)
                             .clip(CircleShape)

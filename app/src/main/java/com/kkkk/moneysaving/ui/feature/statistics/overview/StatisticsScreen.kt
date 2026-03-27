@@ -1,8 +1,10 @@
-package com.kkkk.moneysaving.ui.feature.statistics
+package com.kkkk.moneysaving.ui.feature.statistics.overview
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,13 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.BarChart
@@ -39,11 +42,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
@@ -56,61 +58,110 @@ import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.kkkk.moneysaving.R
 import com.kkkk.moneysaving.domain.model.CategoryType
+import com.kkkk.moneysaving.ui.LocalScreenPadding
 import com.kkkk.moneysaving.ui.components.SegmentedTab
 import com.kkkk.moneysaving.ui.components.StatItemCard
 import com.kkkk.moneysaving.ui.components.StatItemUI
+import com.kkkk.moneysaving.ui.feature.home.SetMonthDialog
+import com.kkkk.moneysaving.util.formatCurrencyAmount
 import com.kkkk.moneysaving.ui.theme.AppColor
 import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.Secondary
+import com.kkkk.moneysaving.util.formatMonthYear
 import kotlinx.coroutines.launch
-import java.time.Month
-import java.util.Locale
+import java.time.YearMonth
+import kotlin.math.abs
 
 @Composable
 fun StatisticsScreen(
     modifier: Modifier = Modifier,
+    viewModel: StatisticsViewModel = hiltViewModel(),
+    onBalanceClick: () -> Unit,
+    onCategoryClick: (String, YearMonth) -> Unit,
 ) {
-    StatisticsContent(modifier = modifier)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    StatisticsContent(
+        modifier = modifier,
+        uiState = uiState,
+        onTypeChange = viewModel::selectType,
+        onTimeChange = viewModel::selectTime,
+        onBalanceClick = onBalanceClick,
+        onCategoryClick = { categoryId -> onCategoryClick(categoryId, uiState.selectedTime) },
+    )
 }
 
 @Composable
 private fun StatisticsContent(
     modifier: Modifier = Modifier,
+    uiState: StatisticsUiState,
+    onTypeChange: (CategoryType) -> Unit,
+    onTimeChange: (YearMonth) -> Unit,
+    onBalanceClick: () -> Unit,
+    onCategoryClick: (String) -> Unit,
 ) {
-    var selectedType by remember { mutableStateOf(CategoryType.EXPENSE) }
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+    var showTimePicker by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = AppColor,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColor),
     ) {
-        Column(
+        LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(
+                bottom = LocalScreenPadding.current.calculateBottomPadding() + 16.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text(
-                text = stringResource(R.string.screen_statistics_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.Black
+            item {
+                Text(
+                    modifier = Modifier.statusBarsPadding(),
+                    text = stringResource(R.string.title_statistics),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.Black
+                )
+            }
+
+            item {
+                TotalBalanceCard(
+                    balance = uiState.balance,
+                    onClick = onBalanceClick
+                )
+            }
+
+            item {
+                SegmentedTab(
+                    selected = uiState.selectedType,
+                    onSelectedChange = onTypeChange
+                )
+            }
+
+            item {
+                MonthSelector(
+                    time = uiState.selectedTime,
+                    onCalendarClick = { showTimePicker = true },
+                    pagerState = pagerState
+                )
+            }
+
+            item { ChartPagerSection(pagerState, uiState.groupedItems) }
+
+            items(uiState.groupedItems, key = { item -> item.categoryId }) { item ->
+                StatItemCard(item = item, onClick = onCategoryClick)
+            }
+        }
+
+        if (showTimePicker) {
+            SetMonthDialog(
+                initialYear = uiState.selectedTime.year,
+                initialMonth = uiState.selectedTime.monthValue,
+                onDismiss = { showTimePicker = false },
+                onSave = { month, year -> onTimeChange(YearMonth.of(year, month)) }
             )
-
-            TotalBalanceCard()
-
-            SegmentedTab(
-                selected = selectedType,
-                onSelectedChange = { selectedType = it }
-            )
-
-            MonthSelector(
-                pagerState = pagerState
-            )
-
-            ChartPagerSection(pagerState)
-
-            CategoryList()
         }
     }
 }
@@ -133,18 +184,15 @@ private fun TotalBalanceCard(
         ) {
             Column {
                 Text(
-                    text = stringResource(R.string.home_total_balance),
+                    text = stringResource(R.string.title_balance),
                     color = Color.White.copy(alpha = 0.9f),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "10,000,000 d",
+                    text = balance.formatCurrencyAmount(),
                     color = Color.White,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 28.sp
-                    )
+                    style = MaterialTheme.typography.titleLarge
                 )
             }
             IconButton(
@@ -166,7 +214,7 @@ private fun TotalBalanceCard(
 
 @Composable
 private fun MonthSelector(
-    month: Month = Month.MARCH,
+    time: YearMonth,
     onCalendarClick: () -> Unit = {},
     pagerState: PagerState,
 ) {
@@ -192,11 +240,8 @@ private fun MonthSelector(
         }
 
         Text(
-            text = month.text(),
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
-            ),
+            text = time.formatMonthYear(),
+            style = MaterialTheme.typography.titleLarge,
             color = Color.Black
         )
 
@@ -210,7 +255,7 @@ private fun MonthSelector(
                 .background(Primary)
         ) {
             Icon(
-                imageVector = if(pagerState.currentPage == 0) Icons.Default.BarChart else Icons.Default.PieChart,
+                imageVector = if (pagerState.currentPage == 0) Icons.Default.BarChart else Icons.Default.PieChart,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(25.dp)
@@ -221,7 +266,8 @@ private fun MonthSelector(
 
 @Composable
 private fun ChartPagerSection(
-    pagerState: PagerState
+    pagerState: PagerState,
+    items: List<StatItemUI>
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -233,16 +279,16 @@ private fun ChartPagerSection(
                 .height(270.dp)
         ) { page ->
             if (page == 0) {
-                PieChartComposable()
+                PieChartComposable(items)
             } else {
-                BarChartComposable()
+                BarChartComposable(items)
             }
         }
     }
 }
 
 @Composable
-private fun BarChartComposable() {
+private fun BarChartComposable(items: List<StatItemUI>) {
     AndroidView(
         modifier = Modifier
             .fillMaxSize()
@@ -262,7 +308,6 @@ private fun BarChartComposable() {
                     setDrawAxisLine(true)
                     axisLineColor = Color(0xFFF0F0F0).toArgb()
                     granularity = 1f
-                    labelCount = 3
                     valueFormatter = object : ValueFormatter() {
                         override fun getFormattedValue(value: Float): String = ""
                     }
@@ -276,112 +321,61 @@ private fun BarChartComposable() {
                     textColor = Color.Gray.toArgb()
                     textSize = 10f
                     axisMinimum = 0f
-                    axisMaximum = 800f
                 }
 
                 axisRight.isEnabled = false
                 setScaleEnabled(false)
                 setPinchZoom(false)
-
-                val entries = listOf(
-                    BarEntry(0.2f, 250f),
-                    BarEntry(1f, 650f),
-                    BarEntry(1.8f, 420f)
-                )
-                val dataSet = BarDataSet(entries, "").apply {
-                    color = Color(0xFF4A80FF).toArgb()
-                    setDrawValues(false)
-                }
-
-                data = BarData(dataSet).apply {
-                    barWidth = 0.15f
-                }
-
-                animateY(1000)
-                invalidate()
             }
+        },
+        update = { chart ->
+            val entries = items.take(5).mapIndexed { index, item ->
+                BarEntry(index.toFloat(), abs(item.amount).toFloat())
+            }
+            val dataSet = BarDataSet(entries, "").apply {
+                colors = items.take(5).map { it.categoryColor.toInt() }
+                valueTextColor = Color.Black.toArgb()
+                valueTextSize = 10f
+                setDrawValues(false)
+            }
+            chart.data = BarData(dataSet).apply {
+                barWidth = 0.4f
+            }
+            chart.invalidate()
         }
     )
 }
 
 @Composable
-private fun PieChartComposable() {
+private fun PieChartComposable(items: List<StatItemUI>) {
     AndroidView(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Transparent),
+            .background(Color.White, RoundedCornerShape(20.dp))
+            .padding(16.dp),
         factory = { context ->
             PieChart(context).apply {
                 description.isEnabled = false
                 legend.isEnabled = false
                 isDrawHoleEnabled = true
+                holeRadius = 50f
+                transparentCircleRadius = 65f
                 setHoleColor(Color.White.toArgb())
-                holeRadius = 55f
-                transparentCircleRadius = 0f
                 setDrawEntryLabels(false)
-                setTouchEnabled(false)
-
-                val entries = listOf(
-                    PieEntry(35f, ""),
-                    PieEntry(25f, ""),
-                    PieEntry(15f, ""),
-                    PieEntry(25f, "")
-                )
-
-                val dataSet = PieDataSet(entries, "").apply {
-                    colors = listOf(
-                        Color(0xFFFFBDE0).toArgb(),
-                        Color(0xFFADDCFF).toArgb(),
-                        Color(0xFFA6E39D).toArgb(),
-                        Color(0xFFFFE78F).toArgb()
-                    )
-                    sliceSpace = 2f
-                    setDrawValues(false)
-                }
-
-                data = PieData(dataSet)
-                animateY(1000)
-                invalidate()
+                isRotationEnabled = false
             }
+        },
+        update = { chart ->
+            val entries = items.map { item ->
+                PieEntry(abs(item.amount).toFloat(), item.categoryName)
+            }
+            val dataSet = PieDataSet(entries, "").apply {
+                colors = items.map { it.categoryColor.toInt() }
+                setDrawValues(false)
+                sliceSpace = 2f
+            }
+            chart.data = PieData(dataSet)
+            chart.invalidate()
         }
     )
-}
-
-@Composable
-private fun CategoryList() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StatItemCard (
-            item = StatItemUI(
-                id = "1",
-                categoryName = "Bread",
-                categoryColor = 0xFFADAA12,
-                amount= 200000,
-                process = 0.7f,
-                categoryIcon = R.drawable.ic_cat_salary
-            )
-        )
-
-        StatItemCard (
-            item = StatItemUI(
-                id = "1",
-                categoryName = "Bread",
-                categoryColor = 0xFFADAA12,
-                amount= 200000,
-                process = 0.7f,
-                categoryIcon = R.drawable.ic_cat_salary
-            )
-        )
-    }
-}
-
-fun Month.text() = this.name.lowercase().replaceFirstChar {
-    if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString()
-}
-
-@Preview
-@Composable
-private fun StatisticsPreview() {
-    MaterialTheme {
-        StatisticsContent()
-    }
 }

@@ -28,8 +28,8 @@ class CategoryRepositoryImpl @Inject constructor() : CategoryRepository {
         Category(id = "extra_income", name = "Extra income", type = CategoryType.INCOME, color = 0xFFBB6BD9, R.drawable.ic_cat_extra_income),
         Category(id = "other_income", name = "Other", type = CategoryType.INCOME, color = 0xFF7499FC, R.drawable.ic_cat_other),
 
-        Category(id = "loan_out", name = "Loan", type = CategoryType.LOAN, color = 0xFF4F80FC, R.drawable.ic_cat_loan),
-        Category(id = "borrow_in", name = "Borrow", type = CategoryType.LOAN, color = 0xFFAB4FFC, R.drawable.ic_cat_borrow),
+        Category(id = ID_LOAN_OUT, name = "Loan", type = CategoryType.LOAN, color = 0xFF4F80FC, R.drawable.ic_cat_loan),
+        Category(id = ID_BORROW_IN, name = "Borrow", type = CategoryType.LOAN, color = 0xFFAB4FFC, R.drawable.ic_cat_borrow),
     )
 
     override fun getAll(): List<Category> = categories
@@ -37,4 +37,9 @@ class CategoryRepositoryImpl @Inject constructor() : CategoryRepository {
     override fun getById(id: String): Category? = categories.firstOrNull { it.id == id }
 
     override fun getType(id: String): CategoryType? { return getById(id)?.type }
+
+    companion object {
+        const val ID_LOAN_OUT  = "loan_out"
+        const val ID_BORROW_IN = "borrow_in"
+    }
 }

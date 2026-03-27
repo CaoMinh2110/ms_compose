@@ -12,4 +12,8 @@ interface AuthRepository {
         onLoading: () -> Unit = {}
     ): Result<UserProfile>
     suspend fun signOut()
+    suspend fun updateUserProfile(
+        name: String,
+        avatar: String?
+    ): Result<Unit>
 }

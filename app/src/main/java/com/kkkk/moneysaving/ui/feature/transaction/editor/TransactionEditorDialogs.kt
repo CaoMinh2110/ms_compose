@@ -2,7 +2,6 @@ package com.kkkk.moneysaving.ui.feature.transaction.editor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.NotInterested
@@ -27,32 +25,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kkkk.moneysaving.R
 import com.kkkk.moneysaving.domain.model.Budget
+import com.kkkk.moneysaving.ui.components.BudgetIcon
 import com.kkkk.moneysaving.ui.components.DialogBody
 import com.kkkk.moneysaving.ui.components.ITEM_HEIGHT
 import com.kkkk.moneysaving.ui.components.ScrollPicker
 import com.kkkk.moneysaving.ui.components.SelectableText
 import com.kkkk.moneysaving.ui.components.SelectedBg
-import com.kkkk.moneysaving.ui.components.VISIBLE_ITEMS
 import com.kkkk.moneysaving.ui.theme.Primary
-import com.kkkk.moneysaving.ui.theme.Secondary
 import com.kkkk.moneysaving.ui.theme.TextSecondary
-import kotlinx.coroutines.launch
-
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.Year
+import java.time.YearMonth
 
 // ══════════════════════════════════════════════════════════════
-// 1.  BUDGET DIALOG
+// 1.  SET AMOUNT DIALOG
 // ══════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +64,7 @@ fun BudgetDialog(
     var selectedId by remember { mutableStateOf(initializeId) }
 
     DialogBody(
-        title = R.string.editor_budget,
+        title = R.string.title_budget,
         trailing = {
             LazyColumn {
                 item {
@@ -88,7 +85,14 @@ fun BudgetDialog(
 
                 items(options, key = { it.id }) { budget ->
                     BudgetDialogItem(
-                        trailing = {},
+                        trailing = {
+                            BudgetIcon(
+                                iconSize = 40f,
+                                budget = budget,
+                                remainingPercent = 1f,
+                                showRemaining = false,
+                            )
+                        },
                         id = budget.id,
                         name = budget.name,
                         isSelected = selectedId == budget.id,
@@ -98,7 +102,10 @@ fun BudgetDialog(
             }
         },
         onDismiss = onDismiss,
-        onSave = { onSave(selectedId) }
+        onSave = {
+            onSave(selectedId)
+            onDismiss()
+        }
     )
 }
 
@@ -146,25 +153,24 @@ private fun BudgetDialogItem(
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 fun SetTimeDialog(
-    initialHour: Int = 12,
-    initialMinute: Int = 30,
+    initialHour: Int = LocalTime.now().hour,
+    initialMinute: Int = LocalTime.now().minute,
     onDismiss: () -> Unit = {},
     onSave: (hour: Int, minute: Int) -> Unit = { _, _ -> },
 ) {
-    val hours = (0..23).map { it.toString().padStart(2, '0') }
-    val minutes = (0..59).map { it.toString().padStart(2, '0') }
-
     var selectedHour by remember { mutableIntStateOf(initialHour) }
     var selectedMinute by remember { mutableIntStateOf(initialMinute) }
 
+    val hours = (0..23).map { it.toString().padStart(2, '0') }
+    val minutes = (0..59).map { it.toString().padStart(2, '0') }
+
     DialogBody(
-        title = R.string.editor_set_time,
+        title = R.string.title_editor_time,
         trailing = { modifier ->
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -204,33 +210,70 @@ fun SetTimeDialog(
             }
         },
         onDismiss = onDismiss,
-        onSave = { onSave(selectedHour, selectedMinute) }
+        onSave = {
+            onSave(selectedHour, selectedMinute)
+            onDismiss()
+        }
     )
 }
 
 // ══════════════════════════════════════════════════════════════
-// 3.  DATE PICKER DIALOG  (MM / DD / YYYY)
+// 3.  DATE PICKER DIALOG  (DD / MM / YYYY)
 // ══════════════════════════════════════════════════════════════
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
 fun SetDateDialog(
-    initialDay: Int = 5,
-    initialMonth: Int = 5,
-    initialYear: Int = 2025,
+    initialDay: Int = LocalDate.now().dayOfMonth,
+    initialMonth: Int = LocalDate.now().monthValue,
+    initialYear: Int = LocalDate.now().year,
     onDismiss: () -> Unit = {},
-    onSave: (month: Int, day: Int, year: Int) -> Unit = { _, _, _ -> },
+    onSave: (day: Int, month: Int, year: Int) -> Unit = { _, _, _ -> },
 ) {
-    val days = (1..31).map { it.toString().padStart(2, '0') }
+    val currentYear = Year.now().value
+    val years = (currentYear - 20..currentYear).map { it.toString() }
     val months = (1..12).map { it.toString().padStart(2, '0') }
-    val years = (2020..2035).map { it.toString() }
 
-    var selectedDay by remember { mutableIntStateOf(initialDay - 1) }
-    var selectedMonth by remember { mutableIntStateOf(initialMonth - 1) }   // 0-based index
-    var selectedYear by remember { mutableIntStateOf(initialYear - 2020) }
+    var selectedYearIndex by remember {
+        mutableIntStateOf(
+            (initialYear - (currentYear - 20)).coerceIn(
+                0,
+                years.size - 1
+            )
+        )
+    }
+    var selectedMonthIndex by remember {
+        mutableIntStateOf(
+            (initialMonth - 1).coerceIn(
+                0,
+                months.size - 1
+            )
+        )
+    }
+
+    val daysInMonth =
+        YearMonth.of(years[selectedYearIndex].toInt(), months[selectedMonthIndex].toInt())
+            .lengthOfMonth()
+    val days = (1..daysInMonth).map { it.toString().padStart(2, '0') }
+
+    var selectedDayIndex by remember {
+        mutableIntStateOf(
+            (initialDay - 1).coerceIn(
+                0,
+                daysInMonth - 1
+            )
+        )
+    }
+
+    // Ensure selectedDayIndex is valid if daysInMonth changes
+    LaunchedEffect(daysInMonth) {
+        if (selectedDayIndex >= daysInMonth) {
+            selectedDayIndex = daysInMonth - 1
+        }
+    }
 
     DialogBody(
-        title = R.string.editor_set_date,
+        title = R.string.title_editor_date,
         trailing = { modifier ->
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -253,8 +296,8 @@ fun SetDateDialog(
                 ) {
                     ScrollPicker(
                         items = days,
-                        selectedIndex = selectedDay,
-                        onItemSelected = { selectedDay = it },
+                        selectedIndex = selectedDayIndex,
+                        onItemSelected = { selectedDayIndex = it },
                         modifier = modifier,
                     )
 
@@ -267,10 +310,10 @@ fun SetDateDialog(
                     )
 
                     ScrollPicker(
-                            items = months,
-                    selectedIndex = selectedMonth,
-                    onItemSelected = { selectedMonth = it },
-                    modifier = modifier,
+                        items = months,
+                        selectedIndex = selectedMonthIndex,
+                        onItemSelected = { selectedMonthIndex = it },
+                        modifier = modifier,
                     )
 
                     Text(
@@ -283,8 +326,8 @@ fun SetDateDialog(
 
                     ScrollPicker(
                         items = years,
-                        selectedIndex = selectedYear,
-                        onItemSelected = { selectedYear = it },
+                        selectedIndex = selectedYearIndex,
+                        onItemSelected = { selectedYearIndex = it },
                         modifier = modifier,
                     )
                 }
@@ -293,10 +336,11 @@ fun SetDateDialog(
         onDismiss = onDismiss,
         onSave = {
             onSave(
-                selectedMonth + 1,
-                selectedDay + 1,
-                selectedYear + 2020,
+                days[selectedDayIndex].toInt(),
+                months[selectedMonthIndex].toInt(),
+                years[selectedYearIndex].toInt()
             )
+            onDismiss()
         }
     )
 }

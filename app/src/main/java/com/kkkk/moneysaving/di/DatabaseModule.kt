@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.kkkk.moneysaving.data.local.AppDatabase
 import com.kkkk.moneysaving.data.local.dao.BudgetDao
+import com.kkkk.moneysaving.data.local.dao.DeletedItemDao
 import com.kkkk.moneysaving.data.local.dao.TransactionDao
 import dagger.Module
 import dagger.Provides
@@ -32,5 +33,7 @@ object DatabaseModule {
 
     @Provides
     fun provideBudgetDao(db: AppDatabase): BudgetDao = db.budgetDao()
-}
 
+    @Provides
+    fun provideDeletedItemDao(db: AppDatabase): DeletedItemDao = db.deletedItemDao()
+}

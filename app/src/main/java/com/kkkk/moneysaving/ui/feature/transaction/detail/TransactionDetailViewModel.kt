@@ -11,12 +11,12 @@ import com.kkkk.moneysaving.domain.repository.CategoryRepository
 import com.kkkk.moneysaving.domain.repository.TransactionRepository
 import com.kkkk.moneysaving.domain.usecase.transaction.SoftDeleteTransactionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class TransactionDetailViewModel @Inject constructor(
@@ -41,10 +41,11 @@ class TransactionDetailViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TransactionDetailUiState())
 
-    fun delete() {
+    fun delete(onBack: () -> Unit) {
         val now = System.currentTimeMillis()
         viewModelScope.launch {
             softDeleteTransactionUseCase(transactionId, now)
+            onBack()
         }
     }
 }

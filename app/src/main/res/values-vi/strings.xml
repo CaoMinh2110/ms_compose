@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- COMMON ACTIONS / BUTTONS / TITLES -->
+    <string name="title_app_name">Quản Lý Tiền</string>
+    <string name="title_continue">Tiếp tục</string>
+    <string name="title_skip">Bỏ qua</string>
+    <string name="title_next">Tiếp</string>
+    <string name="title_save">Lưu</string>
+    <string name="title_cancel">Hủy</string>
+    <string name="title_ok">OK</string>
+    <string name="title_yes">Có</string>
+    <string name="title_later">Sau</string>
+    <string name="title_rate_not_now">Không ngay</string>
+    <string name="title_edit">Chỉnh sửa</string>
+    <string name="title_delete_transaction">Xóa Giao Dịch</string>
+    <string name="title_budget_detail">Chi Tiết Ngân Sách</string>
+    <string name="title_start">Bắt đầu</string>
+    <string name="title_option">Tùy chọn</string>
+    <string name="title_device_save">Lưu vào thiết bị</string>
+    <string name="title_edit_avatar">Cập nhật avatar</string>
+    <string name="title_show_avatar">Hiển thị avatar</string>
+
+    <!-- COMMON LABELS -->
+    <string name="title_home">Trang chủ</string>
+    <string name="title_statistics">Thống kê</string>
+    <string name="title_transaction">Giao dịch</string>
+    <string name="title_budget">Ngân sách</string>
+    <string name="title_settings">Cài đặt</string>
+    <string name="title_account">Tài khoản</string>
+    <string name="title_language">Ngôn ngữ</string>
+    <string name="title_currency">Tiền tệ</string>
+    <string name="title_sync">Đồng bộ</string>
+    <string name="title_rate">Đánh giá</string>
+    <string name="title_privacy_policy">Chính sách bảo mật</string>
+    <string name="title_share">Chia sẻ</string>
+    <string name="title_log_in">Đăng nhập</string>
+    <string name="title_log_out">Đăng xuất</string>
+    <string name="title_guest">Khách</string>
+    <string name="title_name">Tên</string>
+    <string name="title_email">Email</string>
+    <string name="title_budget_add">Thêm ngân sách</string>
+    <string name="title_budget_edit">Chỉnh sửa ngân sách</string>
+    <string name="title_editor_budget">@string/title_budget</string>
+    <string name="title_editor_date">Ngày</string>
+    <string name="title_editor_time">Thời gian</string>
+    <string name="title_editor_borrower">Người vay</string>
+    <string name="title_editor_category">Danh mục</string>
+    <string name="title_editor_note">Ghi chú</string>
+    <string name="title_editor_amount">Số tiền</string>
+    <string name="title_auth_google">Tiếp tục với Google</string>
+
+    <!-- COMMON ENTITIES -->
+    <string name="title_expense">Chi phí</string>
+    <string name="title_expenses">Các khoản chi</string>
+    <string name="title_income">Thu nhập</string>
+    <string name="title_incomes">Các khoản thu</string>
+    <string name="title_month">Khoản vay</string>
+    <string name="title_loan">Khoản vay</string>
+    <string name="title_borrow">Vay</string>
+    <string name="title_balance">Số dư</string>
+    <string name="title_remaining">Còn lại</string>
+    <string name="title_total_expense">Tổng chi</string>
+    <string name="title_total_income">Tổng thu</string>
+    <string name="title_total_loan">Tổng vay</string>
+
+    <!-- MESSAGES / INFO -->
+    <string name="message_splash_loading">Đang tải (%1$d%%)...</string>
+    <string name="message_splash_ads_note">Hành động này có thể chứa quảng cáo</string>
+    <string name="message_intro_1">Ghi lại chi tiêu cá nhân dễ dàng và quản lý tiền.</string>
+    <string name="message_intro_2">Xem biểu đồ trực quan cho chi tiêu hàng tháng.</string>
+    <string name="message_intro_3">Phân loại thu nhập rõ ràng với thống kê dễ nhìn.</string>
+    <string name="message_intro_4">Lưu khoản tiết kiệm mới; nhận biết nhanh hàng ngày.</string>
+    <string name="message_transaction_empty">Không tìm thấy dữ liệu, vui lòng thử lại.</string>
+    <string name="message_budget_empty">Thêm chi tiêu đầu tiên để bắt đầu!</string>
+    <string name="message_sync_backup_title">Dữ liệu trước chưa được đồng bộ?</string>
+    <string name="message_sync_backup_desc">Bạn có muốn sao lưu trước không?</string>
+    <string name="message_sync_done">Dữ liệu của bạn đã được đồng bộ thành công</string>
+    <string name="message_home_today">Hôm nay, %1$s</string>
+    <string name="message_home_yesterday">Hôm qua, %1$s</string>
+    <string name="message_home_last_week">Tuần trước, %1$s</string>
+    <string name="message_rate_0">Bạn có thích ứng dụng không?</string>
+    <string name="message_rate_1">Ôi không!</string>
+    <string name="message_rate_2">Chúng tôi cũng yêu bạn!</string>
+    <string name="message_save_success">Đã lưu vào thư viện</string>
+    <string name="message_save_fail">Lưu thất bại!</string>
+
+    <!-- ERRORS -->
+    <string name="error_editor_amount_invalid">Số tiền không hợp lệ</string>
+
+    <!-- HINTS / PLACEHOLDERS -->
+    <string name="hint_note">Thêm mô tả</string>
+    <string name="hint_search">Tìm kiếm</string>
+    <string name="hint_budget_name">Tên ngân sách</string>
+    <string name="hint_budget_amount">Số tiền</string>
+    <string name="hint_transaction_name">Tên</string>
+
+    <!-- FORMATS -->
+    <string name="format_day">EEEE, d MMMM</string>
+    <string name="format_day_month">d MMMM</string>
+    <string name="format_month_year">Tháng M, yyyy</string>
+    <string name="format_month_short_year">MMMM yyyy</string>
+
+    <!-- PREFIXES -->
+    <string name="prefix_this_month">Tháng này</string>
+    <string name="prefix_last_month">Tháng trước</string>
+    <string name="prefix_today">Hôm nay</string>
+    <string name="prefix_yesterday">Hôm qua</string>
+    <string name="prefix_last_week">Tuần trước</string>
+</resources>

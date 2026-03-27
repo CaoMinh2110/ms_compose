@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kkkk.moneysaving.R
+import com.kkkk.moneysaving.ui.theme.Primary
+import com.kkkk.moneysaving.ui.theme.Secondary
 
 @Composable
 fun OnboardingBudgetScreen(
@@ -36,16 +39,17 @@ fun OnboardingBudgetScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF0E6B7C),
+        color = Secondary,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 28.dp),
+                .padding(horizontal = 24.dp, vertical = 28.dp)
+                .navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                text = stringResource(R.string.onboarding_budget_title),
+                text = stringResource(R.string.title_budget),
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.White,
             )
@@ -65,7 +69,7 @@ fun OnboardingBudgetScreen(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            text = stringResource(R.string.onboarding_budget_hint_name),
+                            text = stringResource(R.string.hint_budget_name),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     },
@@ -75,11 +79,24 @@ fun OnboardingBudgetScreen(
                 OutlinedTextField(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     value = uiState.amount,
-                    onValueChange = viewModel::updateAmount,
+                    onValueChange = { input ->
+                        val digitsOnly = input.filter { it.isDigit() }
+
+                        val processedValue = when {
+                            digitsOnly.isEmpty() -> ""
+                            digitsOnly.startsWith("0") && digitsOnly.length > 1 -> {
+                                digitsOnly.dropWhile { it == '0' }.ifEmpty { "0" }
+                            }
+
+                            else -> digitsOnly
+                        }
+
+                        viewModel.updateAmount(processedValue)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            text = stringResource(R.string.onboarding_budget_hint_amount),
+                            text = stringResource(R.string.hint_budget_amount),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     },
@@ -90,12 +107,12 @@ fun OnboardingBudgetScreen(
                     onClick = { viewModel.finish(onFinished) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1B4B59),
+                        containerColor = Primary,
                         contentColor = Color.White,
                     ),
                     shape = RoundedCornerShape(16.dp),
                 ) {
-                    Text(text = stringResource(R.string.onboarding_budget_finish))
+                    Text(text = stringResource(R.string.title_save))
                 }
             }
         }

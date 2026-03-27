@@ -22,13 +22,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.kkkk.moneysaving.ui.feature.transaction.detail.toAmountString
+import com.kkkk.moneysaving.util.formatCurrencyAmount
 import com.kkkk.moneysaving.ui.theme.TextError
 import com.kkkk.moneysaving.ui.theme.TextPositive
 import com.kkkk.moneysaving.ui.theme.TextPrimary
 
 data class StatItemUI(
-    val id: String,
+    val categoryId: String,
     val categoryName: String,
     val categoryColor: Long,
     val amount: Long,
@@ -39,14 +39,14 @@ data class StatItemUI(
 @Composable
 fun StatItemCard(
     item: StatItemUI,
-    onClick: () -> Unit = {}
+    onClick: (String) -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(20.dp))
-            .background(color = Color.White, shape = RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick)
+            .shadow(4.dp, RoundedCornerShape(12.dp))
+            .background(color = Color.White, shape = RoundedCornerShape(12.dp))
+            .clickable(onClick = { onClick(item.categoryId) })
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -58,7 +58,7 @@ fun StatItemCard(
         )
 
         Column(
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -72,7 +72,7 @@ fun StatItemCard(
                 )
 
                 Text(
-                    text = item.amount.toAmountString(),
+                    text = item.amount.formatCurrencyAmount(),
                     style = MaterialTheme.typography.titleMedium,
                     color = if (item.amount < 0) TextError else TextPositive,
                 )

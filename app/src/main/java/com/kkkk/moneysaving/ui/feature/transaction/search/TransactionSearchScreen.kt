@@ -1,23 +1,21 @@
 package com.kkkk.moneysaving.ui.feature.transaction.search
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,17 +28,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kkkk.moneysaving.R
-import com.kkkk.moneysaving.ui.LocalScreenPadding
-import com.kkkk.moneysaving.ui.components.toTimeString
-import com.kkkk.moneysaving.ui.feature.transaction.detail.toAmountString
-import com.kkkk.moneysaving.ui.theme.TextError
-import com.kkkk.moneysaving.ui.theme.TextPositive
+import com.kkkk.moneysaving.ui.components.TransactionItemCard
 import com.kkkk.moneysaving.ui.theme.TextPrimary
+import com.kkkk.moneysaving.ui.theme.TextSecondary
 
 @Composable
 fun TransactionSearchScreen(
@@ -57,19 +53,18 @@ fun TransactionSearchScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    horizontal = 20.dp,
-                    vertical = LocalScreenPadding.current.calculateTopPadding() + 14.dp
-                ),
+                .padding(horizontal = 20.dp),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 IconButton(onBack) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                        imageVector = Icons.Rounded.ArrowBackIosNew,
                         contentDescription = null,
                         modifier = Modifier.size(24.dp)
                     )
@@ -80,16 +75,16 @@ fun TransactionSearchScreen(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            text = stringResource(R.string.transaction_search_title),
+                            text = stringResource(R.string.hint_search),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFF939393),
+                            color = TextSecondary,
                         )
                     },
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = null,
-                            tint = Color(0xFF939393),
+                            tint = TextSecondary,
                         )
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -97,19 +92,16 @@ fun TransactionSearchScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
             if (uiState.items.isEmpty()) {
                 TransactionSearchEmptyState()
-            } else {
+            } else if (!uiState.query.isEmpty()) {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 16.dp),
                 ) {
                     items(uiState.items) { item ->
-                        TransactionSearchItemRow(
+                        TransactionItemCard(
                             item = item,
                             onClick = { onOpenDetail(item.id) },
                         )
@@ -123,83 +115,23 @@ fun TransactionSearchScreen(
 @Composable
 private fun TransactionSearchEmptyState() {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 80.dp),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .background(color = Color(0xFFEAF4F7), shape = RoundedCornerShape(18.dp)),
+            Image(
+                painter = painterResource(R.drawable.pc_no_data),
+                contentDescription = null,
+                modifier = Modifier.size(120.dp)
             )
             Text(
-                text = stringResource(R.string.transaction_search_empty),
+                text = stringResource(R.string.message_transaction_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextPrimary,
             )
         }
     }
 }
-
-@Composable
-private fun TransactionSearchItemRow(
-    item: TransactionSearchItem,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = Color.White, shape = RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .background(color = Color(item.categoryColor), shape = CircleShape),
-            )
-            Column {
-                Text(
-                    text = item.categoryName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
-                )
-                item.note?.takeIf { it.isNotBlank() }?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF939393),
-                    )
-                }
-            }
-        }
-
-        Column(
-            horizontalAlignment = Alignment.End,
-        ) {
-            Text(
-                text = item.occurredAt.toTimeString(),
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF939393),
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = item.amount.toAmountString(),
-                style = MaterialTheme.typography.titleMedium,
-                color = if (item.amount < 0) TextError else TextPositive,
-            )
-        }
-    }
-}
-

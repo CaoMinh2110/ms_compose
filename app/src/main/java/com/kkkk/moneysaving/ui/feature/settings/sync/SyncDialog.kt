@@ -1,6 +1,5 @@
 package com.kkkk.moneysaving.ui.feature.settings.sync
 
-import android.R.attr.contentDescription
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,12 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.kkkk.moneysaving.R
+import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.TextPrimary
+import com.kkkk.moneysaving.ui.theme.TextSecondary
 
 @Composable
 fun SyncDialog(
@@ -55,15 +52,15 @@ fun SyncDialog(
                     modifier = Modifier.size(54.dp),
                 )
                 Text(
-                    text = stringResource(if (mode == SyncDialogMode.ConfirmBackup) R.string.sync_backup_title else R.string.sync_done_title),
+                    text = stringResource(if (mode == SyncDialogMode.ConfirmBackup) R.string.message_sync_backup_title else R.string.message_sync_done),
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
                 )
                 if (mode == SyncDialogMode.ConfirmBackup) {
                     Text(
-                        text = stringResource(R.string.sync_backup_desc),
+                        text = stringResource(R.string.message_sync_backup_desc),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF939393),
+                        color = TextSecondary,
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -79,11 +76,11 @@ fun SyncDialog(
                                 .height(44.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFFEAF4F7),
-                                contentColor = Color(0xFF1B4B59),
+                                contentColor = Primary,
                             ),
                             shape = RoundedCornerShape(14.dp),
                         ) {
-                            Text(text = stringResource(R.string.sync_later))
+                            Text(text = stringResource(R.string.title_later))
                         }
                         Button(
                             onClick = onConfirm,
@@ -91,12 +88,15 @@ fun SyncDialog(
                                 .weight(1f)
                                 .height(44.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1B4B59),
+                                containerColor = Primary,
                                 contentColor = Color.White,
                             ),
                             shape = RoundedCornerShape(14.dp),
                         ) {
-                            Text(text = stringResource(R.string.sync_yes))
+                            Text(
+                                text = stringResource(R.string.title_yes),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     } else {
                         Button(
@@ -105,12 +105,15 @@ fun SyncDialog(
                                 .fillMaxWidth()
                                 .height(44.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1B4B59),
+                                containerColor = Primary,
                                 contentColor = Color.White,
                             ),
                             shape = RoundedCornerShape(14.dp),
                         ) {
-                            Text(text = stringResource(R.string.sync_ok))
+                            Text(
+                                text = stringResource(R.string.title_ok),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                     }
                 }

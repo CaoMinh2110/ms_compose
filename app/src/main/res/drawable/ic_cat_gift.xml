@@ -5,11 +5,14 @@
     android:viewportWidth="44"
     android:viewportHeight="44">
 
-    <path
-        android:fillColor="#F2EDFD"
-        android:pathData="M22,0.5 A21.5,21.5 0 1,1 22,43.5 A21.5,21.5 0 1,1 22,0.5 Z"
-        android:strokeWidth="1"
-        android:strokeColor="#AA8EFB" />
+    <group>
+        <path
+            android:fillColor="#F2EDFD"
+            android:pathData="M22,0.5 A21.5,21.5 0 1,1 22,43.5 A21.5,21.5 0 1,1 22,0.5 Z"
+            android:strokeWidth="1"
+            android:strokeColor="#AA8EFB" />
+    </group>
+
     <group>
         <path
             android:fillColor="#AA8EFB"

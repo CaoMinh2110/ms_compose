@@ -31,13 +31,13 @@ import com.kkkk.moneysaving.ui.theme.Secondary
 fun LanguageItemCard(
     language: Language,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: (String) -> Unit
 ) {
     val borderColor = if (isSelected) Secondary else Color(0xFFE0E0E0)
     val borderWidth = if (isSelected) 2.dp else 1.dp
 
     Surface(
-        onClick = onClick,
+        onClick = { onClick(language.code) },
         modifier = Modifier
             .fillMaxWidth()
             .height(68.dp),

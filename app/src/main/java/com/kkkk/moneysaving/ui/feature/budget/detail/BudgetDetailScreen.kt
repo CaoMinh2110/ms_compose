@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,14 +15,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,13 +50,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kkkk.moneysaving.R
 import com.kkkk.moneysaving.domain.model.Budget
-import com.kkkk.moneysaving.ui.LocalScreenPadding
+import com.kkkk.moneysaving.domain.model.CategoryType
 import com.kkkk.moneysaving.ui.components.BudgetIcon
 import com.kkkk.moneysaving.ui.components.StatItemCard
-import com.kkkk.moneysaving.ui.feature.transaction.detail.toAmountString
 import com.kkkk.moneysaving.ui.theme.AppColor
 import com.kkkk.moneysaving.ui.theme.Secondary
+import com.kkkk.moneysaving.ui.theme.TextBudgetDark
 import com.kkkk.moneysaving.ui.theme.TextPrimary
+import com.kkkk.moneysaving.util.formatCurrencyAmount
 
 private const val iconSize = 170F
 
@@ -57,6 +65,7 @@ private const val iconSize = 170F
 @Composable
 fun BudgetDetailScreen(
     onBack: () -> Unit,
+    onCategoryDetail: (String) -> Unit,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     viewModel: BudgetDetailViewModel = hiltViewModel(),
@@ -65,7 +74,8 @@ fun BudgetDetailScreen(
 
     BudgetDetailContent(
         uiState = uiState,
-        onBack = onBack,
+        onBackClick = onBack,
+        onCategoryClick = onCategoryDetail,
         onDelete = { viewModel.delete(onBack) },
         sharedTransitionScope = sharedTransitionScope,
         animatedVisibilityScope = animatedVisibilityScope
@@ -76,7 +86,8 @@ fun BudgetDetailScreen(
 @Composable
 private fun BudgetDetailContent(
     uiState: BudgetDetailUiState,
-    onBack: () -> Unit,
+    onBackClick: () -> Unit,
+    onCategoryClick: (String) -> Unit,
     onDelete: () -> Unit,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
@@ -94,11 +105,23 @@ private fun BudgetDetailContent(
         label = "contentAlpha"
     )
 
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isTransitionFinished) AppColor else Secondary,
+        animationSpec = tween(300),
+        label = "contentAlpha"
+    )
+
+    val budgetProgress by animateFloatAsState(
+        targetValue = if (isTransitionFinished) uiState.progress else 0f,
+        animationSpec = tween(300),
+        label = "contentAlpha"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Secondary)
-            .padding(top = LocalScreenPadding.current.calculateTopPadding()),
+            .background(backgroundColor)
+            .navigationBarsPadding(),
     ) {
         Box(
             modifier = Modifier
@@ -108,16 +131,25 @@ private fun BudgetDetailContent(
                 .background(
                     color = AppColor,
                     shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
-                )
-        )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (uiState.groupedItems.isEmpty()) {
+                BudgetScreenEmptyState()
+            }
+        }
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            Modifier
+                .wrapContentHeight()
+                .background(color = Secondary)
+        ) {
             item {
                 Column(
                     modifier = Modifier
                         .onGloballyPositioned { coordinates ->
                             headerHeight = with(density) {
-                                coordinates.size.height.toDp() - iconSize.dp * 0.7f + 16.dp
+                                coordinates.size.height.toDp() - (iconSize * 0.6f).dp
                             }
                         },
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -126,71 +158,83 @@ private fun BudgetDetailContent(
                         BudgetDetailHeader(
                             title = uiState.budget.name,
                             amount = uiState.budget.amount,
-                            onBack = onBack,
+                            onBack = onBackClick,
                             onDelete = onDelete,
                         )
                     }
 
-                    BudgetIcon(
-                        iconSize,
-                        uiState.budget,
-                        uiState.progress,
-                        showRemaining = false,
-                        showShadow = false,
-                        sharedTransitionScope = sharedTransitionScope,
-                        animatedVisibilityScope = animatedVisibilityScope
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height((iconSize * 0.6f).dp)
+                                .background(
+                                    color = backgroundColor,
+                                    shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
+                                )
+                        )
+                        BudgetIcon(
+                            iconSize,
+                            uiState.budget,
+                            budgetProgress,
+                            showRemaining = false,
+                            showShadow = false,
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+
+                    }
                 }
             }
+            uiState.groupedItems.forEach { (typeLabel, items) ->
+                item(key = typeLabel) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer { alpha = contentAlpha }
+                            .background(AppColor)
+                            .padding(horizontal = 24.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(
+                                when (typeLabel) {
+                                    CategoryType.EXPENSE -> R.string.title_total_expense
+                                    CategoryType.INCOME -> R.string.title_total_income
+                                    CategoryType.LOAN -> R.string.title_total_loan
+                                }
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary,
+                        )
 
-            if (uiState.groupedItems.isEmpty()) {
-                item {
-                    BudgetScreenEmptyState(
-                        Modifier
-                        .graphicsLayer { alpha = contentAlpha }
-                        .fillMaxSize(),
-                    )
-                }
-            } else {
-                uiState.groupedItems.forEach { (typeLabel, items) ->
-                    item(key = typeLabel) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .graphicsLayer { alpha = contentAlpha }
-                                .background(AppColor)
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = typeLabel,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = TextPrimary,
-                            )
-
-                            Text(
-                                text = typeLabel,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = TextPrimary,
-                            )
-                        }
+                        Text(
+                            text = uiState.groupedSummary[typeLabel]!!.formatCurrencyAmount(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary,
+                        )
                     }
-                    items(
-                        items = items,
-                        key = { it.id }
-                    ) { item ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .graphicsLayer { alpha = contentAlpha }
-                                .background(AppColor)
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
-                        ) {
-                            StatItemCard(
-                                item = item,
-                                onClick = {},
-                            )
-                        }
+                }
+                items(
+                    items = items,
+                    key = { it.categoryId }
+                ) { item ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer { alpha = contentAlpha }
+                            .background(color = AppColor)
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        StatItemCard(
+                            item = item,
+                            onClick = { onCategoryClick(it) },
+                        )
                     }
                 }
             }
@@ -208,13 +252,14 @@ private fun BudgetDetailHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         IconButton(onBack) {
             Icon(
-                imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                imageVector = Icons.Rounded.ArrowBackIosNew,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
@@ -229,14 +274,14 @@ private fun BudgetDetailHeader(
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = Color.White,
             )
 
             Text(
-                text = amount.toAmountString(),
+                text = amount.formatCurrencyAmount(),
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
+                color = TextBudgetDark,
             )
         }
         IconButton(onDelete) {
@@ -251,22 +296,19 @@ private fun BudgetDetailHeader(
 }
 
 @Composable
-private fun BudgetScreenEmptyState(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.TopCenter,
-    ) {
+private fun BudgetScreenEmptyState() {
+    Box(contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .background(color = Color(0xFFEAF4F7), shape = RoundedCornerShape(18.dp)),
+            Image(
+                painter = painterResource(R.drawable.pc_no_transaction),
+                contentDescription = null,
+                modifier = Modifier.size(135.dp),
             )
             Text(
-                text = stringResource(R.string.budget_no_data),
+                text = stringResource(R.string.message_budget_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextPrimary,
             )
@@ -282,7 +324,7 @@ private fun BudgetDetailPreview() {
             uiState = BudgetDetailUiState(
                 budget = Budget(
                     id = "1",
-                    name = "Mỹ phẩm",
+                    name = "Lunch",
                     amount = 500000,
                     color = 0xFFFFC0D8,
                     createdAt = 0,
@@ -291,7 +333,8 @@ private fun BudgetDetailPreview() {
                 ),
                 groupedItems = emptyMap(),
             ),
-            onBack = {},
+            onBackClick = {},
+            onCategoryClick = {},
             onDelete = {}
         )
     }

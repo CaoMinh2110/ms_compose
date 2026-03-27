@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Policy
@@ -57,8 +57,10 @@ import com.kkkk.moneysaving.ui.feature.settings.rate.RateDialog
 import com.kkkk.moneysaving.ui.feature.settings.sync.SyncDialog
 import com.kkkk.moneysaving.ui.feature.settings.sync.SyncDialogMode
 import com.kkkk.moneysaving.ui.theme.AppColor
+import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.Secondary
 import com.kkkk.moneysaving.ui.theme.TextPrimary
+import com.kkkk.moneysaving.ui.theme.TextSecondary
 
 @Composable
 fun SettingsScreen(
@@ -69,7 +71,6 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var showSyncDialog by remember { mutableStateOf(false) }
     var showRateDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -78,11 +79,6 @@ fun SettingsScreen(
             onAccountClick = onAccountClick,
             onLanguageClick = onLanguageClick,
             onCurrencyClick = onCurrencyClick,
-            onSyncClick = {
-                if (uiState.isLoggedIn) {
-                    showSyncDialog = true
-                }
-            },
             onRateClick = { showRateDialog = true },
             onLoginClick = { viewModel.loginWithGoogle(context) },
             onLogoutClick = { viewModel.logout() },
@@ -93,21 +89,26 @@ fun SettingsScreen(
             }
         )
 
-        if (showSyncDialog) {
+        if (uiState.showSyncConfirmDialog) {
             SyncDialog(
                 mode = SyncDialogMode.ConfirmBackup,
-                onDismiss = { showSyncDialog = false },
-                onConfirm = {
-                    showSyncDialog = false
-                    viewModel.syncData()
-                },
+                onDismiss = { viewModel.dismissSyncConfirmDialog() },
+                onConfirm = { viewModel.confirmSync() },
+            )
+        }
+
+        if (uiState.showSyncSuccessDialog) {
+            SyncDialog(
+                mode = SyncDialogMode.Completed,
+                onDismiss = { viewModel.dismissSyncSuccessDialog() },
+                onConfirm = { viewModel.dismissSyncSuccessDialog() },
             )
         }
 
         if (showRateDialog) {
             RateDialog(
                 onDismiss = { showRateDialog = false },
-                onRate = { rating ->
+                onRate = { _ ->
                     showRateDialog = false
                     // Handle rating
                 }
@@ -126,17 +127,17 @@ private fun SettingsContent(
     onAccountClick: () -> Unit = {},
     onLanguageClick: () -> Unit = {},
     onCurrencyClick: () -> Unit = {},
-    onSyncClick: () -> Unit = {},
     onRateClick: () -> Unit = {},
     onLoginClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onSyncCheckedChange: (Boolean) -> Unit = {},
 ) {
-    @Composable fun arrowIcon() = Icon(
-        Icons.AutoMirrored.Filled.ArrowForwardIos,
+    @Composable
+    fun arrowIcon() = Icon(
+        Icons.AutoMirrored.Rounded.ArrowForwardIos,
         contentDescription = null,
         modifier = Modifier.size(16.dp),
-        tint = Color(0xFF939393)
+        tint = TextSecondary
     )
 
     Surface(
@@ -158,26 +159,27 @@ private fun SettingsContent(
                     .fillMaxSize()
                     .background(
                         color = AppColor,
-                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                    )
                     .padding(vertical = 14.dp)
                     .padding(top = 24.dp),
             ) {
                 SettingsRow(
                     icon = Icons.Default.Language,
-                    title = stringResource(R.string.settings_language),
-                    trailing = { arrowIcon() } ,
-                    modifier = Modifier.clickable(onClick = onLanguageClick),
+                    title = stringResource(R.string.title_language),
+                    trailing = { arrowIcon() },
+                    onClick = onLanguageClick,
                 )
                 SettingsRow(
                     icon = Icons.Default.Public,
-                    title = stringResource(R.string.settings_currency),
+                    title = stringResource(R.string.title_currency),
                     subtitle = uiState.currencyCode,
                     trailing = { arrowIcon() },
-                    modifier = Modifier.clickable(onClick = onCurrencyClick),
+                    onClick = onCurrencyClick,
                 )
                 SettingsRow(
                     icon = Icons.Default.Sync,
-                    title = stringResource(R.string.settings_sync),
+                    title = stringResource(R.string.title_sync),
                     trailing = {
                         Switch(
                             checked = if (uiState.isLoggedIn) uiState.isSyncEnabled else false,
@@ -185,31 +187,28 @@ private fun SettingsContent(
                             enabled = uiState.isLoggedIn
                         )
                     },
-                    modifier = Modifier.clickable(enabled = uiState.isLoggedIn, onClick = onSyncClick)
                 )
                 SettingsRow(
                     icon = Icons.Default.Star,
-                    title = stringResource(R.string.settings_rate),
+                    title = stringResource(R.string.title_rate),
                     trailing = { arrowIcon() },
-                    modifier = Modifier.clickable(onClick = onRateClick),
+                    onClick = onRateClick,
                 )
                 SettingsRow(
                     icon = Icons.Default.Policy,
-                    title = stringResource(R.string.settings_privacy_policy),
+                    title = stringResource(R.string.title_privacy_policy),
                     trailing = { },
                 )
                 SettingsRow(
                     icon = Icons.Default.Share,
-                    title = stringResource(R.string.settings_share),
+                    title = stringResource(R.string.title_share),
                     trailing = { },
                 )
                 SettingsRow(
                     icon = if (uiState.isLoggedIn) Icons.AutoMirrored.Filled.Logout else Icons.AutoMirrored.Filled.Login,
-                    title = stringResource(if (uiState.isLoggedIn) R.string.settings_log_out else R.string.settings_log_in),
+                    title = stringResource(if (uiState.isLoggedIn) R.string.title_log_out else R.string.title_log_in),
                     trailing = { },
-                    modifier = Modifier.clickable{
-                        if (uiState.isLoggedIn) onLogoutClick() else onLoginClick()
-                    },
+                    onClick = { if (uiState.isLoggedIn) onLogoutClick() else onLoginClick() },
                 )
             }
         }
@@ -228,7 +227,7 @@ private fun SettingsHeaderSection(
             .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
         Text(
-            text = stringResource(R.string.settings_account),
+            text = stringResource(R.string.title_account),
             style = MaterialTheme.typography.titleLarge,
             color = Color.White,
         )
@@ -242,40 +241,58 @@ private fun SettingsHeaderSection(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                if (isLoggedIn && userProfile?.avatar != null) {
-                    AsyncImage(
-                        model = userProfile.avatar,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.AccountCircle,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(52.dp),
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(Primary), // vòng ngoài (Primary)
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isLoggedIn && userProfile?.avatar != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(3.dp) // độ dày vòng Primary
+                                .clip(CircleShape)
+                                .background(Secondary), // vòng trong (Secondary)
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = userProfile.avatar,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(3.dp) // khoảng cách tới vòng Secondary
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
                 Column {
                     Text(
-                        text = userProfile?.name ?: stringResource(if (isLoggedIn) R.string.settings_user_name_placeholder else R.string.settings_guest),
+                        text = userProfile?.name.orEmpty(),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White,
                     )
                     Text(
-                        text = userProfile?.email ?: (if (isLoggedIn) stringResource(R.string.settings_user_email_placeholder) else ""),
+                        text = userProfile?.email.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFFE0F2F6),
                     )
                 }
             }
-            if(isLoggedIn) {
+            if (isLoggedIn) {
                 IconButton(onClick) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
                         contentDescription = null,
                         tint = Color.White,
                     )
@@ -292,46 +309,53 @@ private fun SettingsRow(
     title: String,
     subtitle: String? = null,
     trailing: @Composable () -> Unit,
+    onClick: (() -> Unit)? = null,
 ) {
-    Row(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     ) {
         Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .background(color = Color(0xFFEAF4F7), shape = CircleShape),
-                contentAlignment = Alignment.Center,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color(0xFF1B4B59),
-                )
-            }
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextPrimary,
-                )
-                subtitle?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF939393),
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(color = Color(0xFFEAF4F7), shape = CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = Primary,
                     )
                 }
+                Column {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary,
+                    )
+                    subtitle?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                        )
+                    }
+                }
             }
+            trailing()
         }
-        trailing()
     }
 }
 

@@ -13,27 +13,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,8 +43,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -59,16 +55,19 @@ import com.kkkk.moneysaving.ui.LocalScreenPadding
 import com.kkkk.moneysaving.ui.components.SegmentedTab
 import com.kkkk.moneysaving.ui.components.TransactionItemCard
 import com.kkkk.moneysaving.ui.components.TransactionItemUI
-import com.kkkk.moneysaving.ui.feature.transaction.detail.toAmountString
+import com.kkkk.moneysaving.util.formatCurrencyAmount
 import com.kkkk.moneysaving.ui.theme.AppColor
 import com.kkkk.moneysaving.ui.theme.MoneySavingTheme
 import com.kkkk.moneysaving.ui.theme.Primary
 import com.kkkk.moneysaving.ui.theme.Secondary
 import com.kkkk.moneysaving.ui.theme.TextPrimary
 import com.kkkk.moneysaving.ui.theme.TextSecondary
+import com.kkkk.moneysaving.util.formatDateWithPrefix
+import com.kkkk.moneysaving.util.formatMonthYear
+import java.time.LocalDate
+import java.time.Month
+import java.time.Year
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 fun HomeScreen(
@@ -81,8 +80,9 @@ fun HomeScreen(
         uiState = uiState,
         onTypeSelected = viewModel::selectType,
         onTimeSelected = viewModel::selectTime,
+        onDeleteTransaction = viewModel::delete,
         onOpenSearch = onOpenSearch,
-        onOpenTransactionDetail = onOpenTransactionDetail
+        onOpenTransactionDetail = onOpenTransactionDetail,
     )
 }
 
@@ -93,102 +93,98 @@ private fun HomeContent(
     onTimeSelected: (YearMonth) -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenTransactionDetail: (String) -> Unit = {},
+    onDeleteTransaction: (String) -> Unit = {},
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
-    var headerHeight by remember { mutableStateOf(0.dp) }
-    val density = LocalDensity.current
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Secondary,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColor)
+            .padding(bottom = LocalScreenPadding.current.calculateBottomPadding()),
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = headerHeight + 16.dp)
-                    .background(
-                        color = AppColor,
-                        shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
-                    )
-            )
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = LocalScreenPadding.current.calculateBottomPadding())
-                    .padding(horizontal = 16.dp)
-            ) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .onGloballyPositioned { coordinates ->
-                                headerHeight = with(density) {
-                                    coordinates.size.height.toDp()
-                                }
-                            }
-                    ) {
-                        HomeHeaderSection(
-                            showTimePicker,
-                            uiState.selectedTime
-                        ) { showTimePicker = true }
-                        HomeBalanceSection(uiState.balance)
-                    }
+        LazyColumn(
+            modifier = Modifier
+                .wrapContentHeight()
+                .background(color = Secondary)
+        ) {
+            item {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    HomeHeaderSection(
+                        showTimePicker,
+                        uiState.selectedTime
+                    ) { showTimePicker = true }
+                    HomeBalanceSection(uiState.balance)
                 }
-                item {
-                    Column(
+            }
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                        .background(
+                            color = AppColor,
+                            shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
+                        )
+                        .padding(vertical = 16.dp)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    SegmentedTab(
+                        selected = uiState.selectedType,
+                        onSelectedChange = onTypeSelected,
+                    )
+                    HomeTotalRow(
+                        totalAmount = uiState.totalAmount,
+                        type = uiState.selectedType,
+                    )
+                    HomeSearchBar(onClick = onOpenSearch)
+                }
+            }
+
+            uiState.groupedItems.forEach { (date, transactions) ->
+                item(key = date) {
+                    Text(
+                        text = date.formatDateWithPrefix(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextPrimary,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 32.dp, bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        SegmentedTab(
-                            selected = uiState.selectedType,
-                            onSelectedChange = onTypeSelected,
-                        )
-                        HomeTotalRow(
-                            totalAmount = uiState.totalAmount,
-                            type = uiState.selectedType,
-                        )
-                        HomeSearchBar(onClick = onOpenSearch)
-                    }
+                            .background(AppColor)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
                 }
+                items(
+                    items = transactions,
+                    key = { it.id }
+                ) { transaction ->
 
-                uiState.groupedItems.forEach { (dateLabel, transactions) ->
-                    item(key = dateLabel) {
-                        Text(
-                            text = dateLabel,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = TextPrimary,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(AppColor)
-                                .padding(vertical = 8.dp)
-                        )
-                    }
-                    items(
-                        items = transactions,
-                        key = { it.id }
-                    ) { transaction ->
-
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = AppColor)
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
                         TransactionItemCard(
                             item = transaction,
-                            onClick = { onOpenTransactionDetail(transaction.id) },
+                            onClick = { onOpenTransactionDetail(it) },
+                            onDeleteClick = { onDeleteTransaction(it) },
+                            showDelete = true
                         )
-
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
+        }
 
-            if(showTimePicker) {
-                SetMonthDialog (
-                    initialYear = uiState.selectedTime.year,
-                    initialMonth = uiState.selectedTime.monthValue,
-                    onDismiss = { showTimePicker = false },
-                    onSave = { month, year -> onTimeSelected(YearMonth.of(month, year)) }
-                )
-            }
+        if (showTimePicker) {
+            SetMonthDialog(
+                initialYear = uiState.selectedTime.year,
+                initialMonth = uiState.selectedTime.monthValue,
+                onDismiss = { showTimePicker = false },
+                onSave = { month, year -> onTimeSelected(YearMonth.of(year, month)) }
+            )
         }
     }
 }
@@ -225,7 +221,7 @@ private fun HomeHeaderSection(
                 modifier = Modifier.size(28.dp),
             )
             Text(
-                text = stringResource(R.string.home_app_title),
+                text = stringResource(R.string.title_app_name),
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.White,
             )
@@ -247,7 +243,7 @@ private fun HomeHeaderSection(
                 color = Color.White,
             )
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
+                imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.rotate(rotation)
@@ -270,14 +266,14 @@ private fun HomeBalanceSection(amount: Long) {
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                text = stringResource(R.string.home_total_balance),
+                text = stringResource(R.string.title_balance),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AnimatedContent(targetState = isVisible, label = "balance_vis") { visible ->
                     Text(
-                        text = if (visible) amount.toAmountString() else "*** ***",
+                        text = if (visible) amount.formatCurrencyAmount() else "*** ***",
                         style = MaterialTheme.typography.titleLarge,
                         color = Color.White,
                     )
@@ -319,17 +315,17 @@ private fun HomeTotalRow(
             Text(
                 text = stringResource(
                     when (type) {
-                        CategoryType.EXPENSE -> R.string.home_total_expenditure
-                        CategoryType.INCOME -> R.string.home_total_income
-                        else -> R.string.home_total_loan
+                        CategoryType.EXPENSE -> R.string.title_total_expense
+                        CategoryType.INCOME -> R.string.title_total_income
+                        else -> R.string.title_total_loan
                     }
                 ),
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF1B4B59),
+                color = Primary,
             )
         }
         Text(
-            text = totalAmount.toAmountString(),
+            text = totalAmount.formatCurrencyAmount(),
             style = MaterialTheme.typography.titleMedium,
             color = Primary,
         )
@@ -352,14 +348,14 @@ private fun HomeSearchBar(
             enabled = false,
             placeholder = {
                 Text(
-                    text = stringResource(R.string.home_search_hint),
+                    text = stringResource(R.string.hint_search),
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary,
                 )
             },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Search,
+                    imageVector = Icons.Rounded.Search,
                     contentDescription = null,
                     tint = TextSecondary,
                 )
@@ -369,9 +365,6 @@ private fun HomeSearchBar(
         )
     }
 }
-
-fun YearMonth.formatMonthYear(): String =
-    this.format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH))
 
 @Preview
 @Composable
@@ -383,7 +376,7 @@ private fun HomeContentPreview() {
                 selectedTime = YearMonth.now(),
                 totalAmount = 1500000L,
                 groupedItems = mapOf(
-                    "Today, 24 May" to listOf(
+                    LocalDate.now() to listOf(
                         TransactionItemUI(
                             id = "1",
                             categoryName = "Food",
@@ -401,7 +394,11 @@ private fun HomeContentPreview() {
                             categoryIcon = R.drawable.ic_cat_traffic
                         )
                     ),
-                    "Yesterday, 23 May" to listOf(
+                    LocalDate.of(
+                        Year.now().value,
+                        Month.FEBRUARY,
+                        LocalDate.now().dayOfMonth
+                    ) to listOf(
                         TransactionItemUI(
                             id = "3",
                             categoryName = "Shopping",
@@ -416,3 +413,4 @@ private fun HomeContentPreview() {
         )
     }
 }
+
