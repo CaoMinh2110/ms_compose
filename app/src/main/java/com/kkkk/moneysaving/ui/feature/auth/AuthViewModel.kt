@@ -42,20 +42,19 @@ class AuthViewModel @Inject constructor(
                 settingsRepository.setSyncEnabled(true)
 
                 // Pull dữ liệu từ Firebase
-                pullDataFromFirebase(user.uid)
+                val hasData = pullDataFromFirebase(user.uid)
 
                 appStartRepository.setCompletedOnboarding(true)
                 _uiState.update { it.copy(isLoading = false) }
-                onFinished(true)
+                onFinished(hasData)
             }.onFailure { e ->
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
     }
 
-    private suspend fun pullDataFromFirebase(uid: String) {
+    private suspend fun pullDataFromFirebase(uid: String): Boolean {
         try {
-            // 1. Pull Budgets
             val budgetsSnapshot = firestore.collection("users")
                 .document(uid)
                 .collection("budgets")
@@ -73,26 +72,22 @@ class AuthViewModel @Inject constructor(
                         updatedAt = doc.getLong("updatedAt") ?: System.currentTimeMillis(),
                         isDeleted = doc.getBoolean("isDeleted") ?: false
                     )
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             }
-
-            // Tập hợp các ID budget còn hiệu lực (chưa bị xóa)
             val activeBudgetIdSet = allBudgets.filter { !it.isDeleted }.map { it.id }.toSet()
 
             if (allBudgets.isNotEmpty()) {
                 budgetRepository.upsertAll(allBudgets)
             }
-
-            // 2. Pull Transactions
             val transactionsSnapshot = firestore.collection("users")
                 .document(uid)
                 .collection("transactions")
                 .get()
                 .await()
 
-            val transactions = transactionsSnapshot.documents.mapNotNull { doc ->
+            val allTransactions = transactionsSnapshot.documents.mapNotNull { doc ->
                 try {
                     val rawBudgetId = doc.getString("budgetId")
 
@@ -114,15 +109,17 @@ class AuthViewModel @Inject constructor(
                         updatedAt = doc.getLong("updatedAt") ?: 0L,
                         isDeleted = doc.getBoolean("isDeleted") ?: false
                     )
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             }
-            if (transactions.isNotEmpty()) {
-                transactionRepository.upsertAll(transactions)
+            if (allTransactions.isNotEmpty()) {
+                transactionRepository.upsertAll(allTransactions)
             }
-        } catch (e: Exception) {
+            return allBudgets.isNotEmpty() || allTransactions.isNotEmpty()
+        } catch (_: Exception) {
             // Log error
+            return false
         }
     }
 

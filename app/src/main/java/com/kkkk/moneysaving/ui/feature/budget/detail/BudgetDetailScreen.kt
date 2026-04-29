@@ -107,7 +107,7 @@ private fun BudgetDetailContent(
 
     val backgroundColor by animateColorAsState(
         targetValue = if (isTransitionFinished) AppColor else Secondary,
-        animationSpec = tween(300),
+        animationSpec = tween(3000),
         label = "contentAlpha"
     )
 
@@ -129,7 +129,7 @@ private fun BudgetDetailContent(
                 .graphicsLayer { alpha = contentAlpha }
                 .padding(top = headerHeight)
                 .background(
-                    color = AppColor,
+                    color = backgroundColor,
                     shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
                 ),
             contentAlignment = Alignment.Center
